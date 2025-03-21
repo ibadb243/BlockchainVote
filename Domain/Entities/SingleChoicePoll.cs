@@ -4,6 +4,8 @@ namespace Domain.Entities;
 
 public class SingleChoicePoll : PollBase
 {
+    public bool IsAnonymous { get; set; }
+
     public SingleChoicePoll()
         : base() { }
 
