@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces;
 using Domain.Entities;
+using Domain.Entities.Abstract;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -11,7 +12,7 @@ public class BlockBuilder : IBlockBuilder
     private readonly IHashHelper _hashHelper;
 
     private int _id;
-    private List<Vote> _votes;
+    private List<VoteBase> _votes;
     private DateTimeOffset _timestamp;
     private string _previousHash;
 
@@ -20,7 +21,7 @@ public class BlockBuilder : IBlockBuilder
         _hashHelper = hashHelper;
 
         _id = 0;
-        _votes = new List<Vote>();
+        _votes = new List<VoteBase>();
         _timestamp = DateTimeOffset.UtcNow;
         _previousHash = string.Empty;
     }
@@ -28,7 +29,7 @@ public class BlockBuilder : IBlockBuilder
     public IBlockBuilder Reset()
     {
         _id = 0;
-        _votes = new List<Vote>();
+        _votes = new List<VoteBase>();
         _timestamp = DateTimeOffset.UtcNow;
         _previousHash = string.Empty;
         return this;
@@ -46,13 +47,13 @@ public class BlockBuilder : IBlockBuilder
         return this;
     }
 
-    public IBlockBuilder AddVote(Vote vote)
+    public IBlockBuilder AddVote(VoteBase vote)
     {
         _votes.Add(vote);
         return this;
     }
 
-    public IBlockBuilder AddVotes(IEnumerable<Vote> votes)
+    public IBlockBuilder AddVotes(IEnumerable<VoteBase> votes)
     {
         _votes.AddRange(votes);
         return this;

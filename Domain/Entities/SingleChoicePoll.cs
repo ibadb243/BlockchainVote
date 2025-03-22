@@ -9,6 +9,9 @@ public class SingleChoicePoll : PollBase
     public SingleChoicePoll()
         : base() { }
 
-    public SingleChoicePoll(Guid userId, string title, string desc, DateTimeOffset startDate, DateTimeOffset? endDate = null)
-        : base(userId, title, desc, startDate, endDate) { }
+    public SingleChoicePoll(Guid userId, string title, string desc, DateTimeOffset startDate, DateTimeOffset? endDate = null, bool isAnonymous = false)
+        : base(userId, title, desc, startDate, endDate)
+    {
+        IsAnonymous = isAnonymous;
+    }
 }
