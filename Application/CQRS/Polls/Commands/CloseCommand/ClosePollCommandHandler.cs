@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Application.CQRS.Polls.Commands.CloseCommand;
 
-public class ClosePollCommandHandler : IRequestHandler<ClosePollCommand>
+public class ClosePollCommandHandler : IRequestHandler<ClosePollCommand, Unit>
 {
     private readonly IApplicationDbContext _context;
 
@@ -15,7 +15,7 @@ public class ClosePollCommandHandler : IRequestHandler<ClosePollCommand>
         _context = context;
     }
 
-    public async Task Handle(ClosePollCommand request, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(ClosePollCommand request, CancellationToken cancellationToken)
     {
         var poll = await _context.Polls.FirstOrDefaultAsync(p => p.Id == request.PollId && p.UserId == request.UserId, cancellationToken);
         if (poll == null) throw new NotFoundException<PollBase>();
@@ -24,5 +24,7 @@ public class ClosePollCommandHandler : IRequestHandler<ClosePollCommand>
         poll.EndDate = DateTimeOffset.UtcNow;
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        return Unit.Value;
     }
 }
