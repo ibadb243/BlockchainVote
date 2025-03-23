@@ -1,24 +1,23 @@
-﻿using Application.CQRS.Polls.Commands.CreateCommand.Single;
+﻿using Application.CQRS.Polls.Commands.CreateCommand.Multiple;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
 using Persistence;
 
 namespace Tests.CQRS.Polls.Create;
 
-public class CreateSingleChoicePollCommandHandlerTests
+public class CreateMultipleChoicePollCommandHandlerTests
 {
-    private readonly CreateSingleChoicePollCommandHandler _handler;
+    private readonly CreateMultipleChoicePollCommandHandler _handler;
     private readonly ApplicationDbContext _context;
 
-    public CreateSingleChoicePollCommandHandlerTests()
+    public CreateMultipleChoicePollCommandHandlerTests()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseInMemoryDatabase(databaseName: "singlepollcreate")
+            .UseInMemoryDatabase(databaseName: "multiplepollcreate")
             .Options;
 
         _context = new ApplicationDbContext(options);
 
-        _handler = new CreateSingleChoicePollCommandHandler(_context);
+        _handler = new CreateMultipleChoicePollCommandHandler(_context);
     }
 
     [Fact]
@@ -26,14 +25,14 @@ public class CreateSingleChoicePollCommandHandlerTests
     {
         // Arrange
         await reset_database();
-        var command = new CreateSingleChoicePollCommand()
+        var command = new CreateMultipleChoicePollCommand()
         {
             UserId = Guid.Parse("fe560d8e-dbe4-4e5e-b1b2-da08b8145494"),
             Title = "Title123",
             Description = "Description",
             StartDate = DateTimeOffset.UtcNow,
             EndDate = DateTimeOffset.UtcNow.AddHours(1),
-            IsAnonymous = false,
+            MaxSelections = 3,
             Options = new List<OptionDto>()
             {
                 new OptionDto() { Fullname="Fullname", Description="Description" },
@@ -47,7 +46,7 @@ public class CreateSingleChoicePollCommandHandlerTests
 
         // Assert
         Assert.NotEqual(Guid.Empty, result);
-        var poll = await _context.SingleChoicePolls.FirstOrDefaultAsync(CancellationToken.None);
+        var poll = await _context.MultipleChoicePolls.FirstOrDefaultAsync(CancellationToken.None);
         Assert.NotNull(poll);
         Assert.Equal(Guid.Parse("fe560d8e-dbe4-4e5e-b1b2-da08b8145494"), poll.UserId);
 
@@ -63,7 +62,7 @@ public class CreateSingleChoicePollCommandHandlerTests
     {
         // Arrange
         await reset_database();
-        var command = new CreateSingleChoicePollCommand()
+        var command = new CreateMultipleChoicePollCommand()
         {
             Title = string.Empty,
             Options = new List<OptionDto>()
@@ -74,7 +73,7 @@ public class CreateSingleChoicePollCommandHandlerTests
 
         // Assert
         Assert.NotEqual(Guid.Empty, result);
-        var poll = await _context.SingleChoicePolls.FirstOrDefaultAsync(CancellationToken.None);
+        var poll = await _context.MultipleChoicePolls.FirstOrDefaultAsync(CancellationToken.None);
         Assert.NotNull(poll);
         var options = await _context.PollOption.Where(x => x.PollId == poll.Id).ToListAsync();
         Assert.Empty(options);
@@ -88,7 +87,7 @@ public class CreateSingleChoicePollCommandHandlerTests
     {
         // Arrange
         await reset_database();
-        var command = new CreateSingleChoicePollCommand();
+        var command = new CreateMultipleChoicePollCommand();
 
         // Act
         var exception = await Assert.ThrowsAsync<DbUpdateException>(async () => await _handler.Handle(command, CancellationToken.None));
