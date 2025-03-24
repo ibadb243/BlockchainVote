@@ -1,6 +1,6 @@
 ﻿namespace Domain.Entities.Abstract;
 
-public class VoteBase
+public abstract class VoteBase
 {
     public Guid Id { get; set; }
     public Guid PollId { get; set; }
@@ -16,4 +16,6 @@ public class VoteBase
         UserId = userId;
         Timestamp = DateTimeOffset.UtcNow;
     }
+
+    public override abstract string ToString();
 }

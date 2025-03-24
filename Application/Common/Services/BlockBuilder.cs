@@ -70,14 +70,14 @@ public class BlockBuilder : IBlockBuilder
         string target = new('0', difficulty);
 
         int nonce = -1;
-        string votesJson = JsonSerializer.Serialize(_votes);
+        string merkle = _hashHelper.CalculateMerkleRoot(_votes.Select(v => v.ToString()).ToList());
 
         string hash = string.Empty;
         do
         {
-            hash = _hashHelper.CalculateHash($"{_id}{votesJson}{_timestamp}{_previousHash}{++nonce}");
+            hash = _hashHelper.CalculateHash($"{_id}{merkle}{_timestamp}{_previousHash}{++nonce}");
         } while (!hash.StartsWith(target));
 
-        return new Block(_id, votesJson, _timestamp, _previousHash, hash, nonce);
+        return new Block(_id, merkle, _timestamp, _previousHash, hash, nonce);
     }
 }

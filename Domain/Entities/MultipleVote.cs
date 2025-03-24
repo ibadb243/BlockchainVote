@@ -1,4 +1,5 @@
 ﻿using Domain.Entities.Abstract;
+using System.Text;
 
 namespace Domain.Entities;
 
@@ -12,5 +13,19 @@ public class MultipleVote : VoteBase
         : base(pollId, userId)
     {
         Options = options;
+    }
+
+    public override string ToString()
+    {
+        var builder = new StringBuilder();
+
+        builder
+            .Append(Id)
+            .Append(PollId)
+            .Append(UserId)
+            .Append(Options)
+            .Append(Timestamp);
+
+        return builder.ToString();
     }
 }
