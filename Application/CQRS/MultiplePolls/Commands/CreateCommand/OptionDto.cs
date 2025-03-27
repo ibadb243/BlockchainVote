@@ -1,4 +1,4 @@
-﻿namespace Application.CQRS.Polls.Commands.CreateCommand.Single;
+﻿namespace Application.CQRS.MultiplePolls.Commands.CreateCommand;
 
 public class OptionDto
 {

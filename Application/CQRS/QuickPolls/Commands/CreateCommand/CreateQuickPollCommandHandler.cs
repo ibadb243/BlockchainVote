@@ -2,28 +2,27 @@
 using Domain.Entities;
 using MediatR;
 
-namespace Application.CQRS.Polls.Commands.CreateCommand.Single;
+namespace Application.CQRS.QuickPolls.Commands.CreateCommand;
 
-public class CreateSingleChoicePollCommandHandler : IRequestHandler<CreateSingleChoicePollCommand, Guid>
+public class CreateQuickPollCommandHandler : IRequestHandler<CreateQuickPollCommand, Guid>
 {
     private readonly IApplicationDbContext _context;
 
-    public CreateSingleChoicePollCommandHandler(IApplicationDbContext context)
+    public CreateQuickPollCommandHandler(IApplicationDbContext context)
     {
         _context = context;
     }
 
-    public async Task<Guid> Handle(CreateSingleChoicePollCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> Handle(CreateQuickPollCommand request, CancellationToken cancellationToken)
     {
-        var poll = new SingleChoicePoll(
+        var poll = new QuickPoll(
             request.UserId,
             request.Title,
             request.Description,
             request.StartDate,
-            request.EndDate,
-            request.IsAnonymous);
+            request.Duration);
 
-        await _context.SingleChoicePolls.AddAsync(poll, cancellationToken);
+        await _context.QuickPolls.AddAsync(poll, cancellationToken);
 
         for (int i = 0; i < request.Options.Count; i++)
         {
@@ -34,7 +33,7 @@ public class CreateSingleChoicePollCommandHandler : IRequestHandler<CreateSingle
                 request.Options[i].Description,
                 request.Options[i].ImagePath);
 
-            await _context.PollOption.AddAsync(option,cancellationToken);
+            await _context.PollOption.AddAsync(option, cancellationToken);
         }
 
         await _context.SaveChangesAsync(cancellationToken);

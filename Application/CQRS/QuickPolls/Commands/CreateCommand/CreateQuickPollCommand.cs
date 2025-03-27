@@ -1,6 +1,6 @@
 ﻿using MediatR;
 
-namespace Application.CQRS.Polls.Commands.CreateCommand.Quick;
+namespace Application.CQRS.QuickPolls.Commands.CreateCommand;
 
 public class CreateQuickPollCommand : IRequest<Guid>
 {

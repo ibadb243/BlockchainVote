@@ -1,6 +1,6 @@
 ﻿using FluentValidation;
 
-namespace Application.CQRS.Polls.Commands.CreateCommand.Quick;
+namespace Application.CQRS.SinglePolls.Commands.CreateCommand;
 
 public class OptionValidator : AbstractValidator<OptionDto>
 {

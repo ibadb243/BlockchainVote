@@ -2,7 +2,7 @@
 using Domain.Entities;
 using MediatR;
 
-namespace Application.CQRS.Polls.Commands.CreateCommand.Multiple;
+namespace Application.CQRS.MultiplePolls.Commands.CreateCommand;
 
 public class CreateMultipleChoicePollCommandHandler : IRequestHandler<CreateMultipleChoicePollCommand, Guid>
 {
