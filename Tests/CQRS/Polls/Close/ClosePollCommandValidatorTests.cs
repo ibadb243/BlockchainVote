@@ -1,5 +1,6 @@
 ﻿using Application.Common.Behaviors;
 using Application.CQRS.Polls.Commands.CloseCommand;
+using Application.CQRS.SinglePolls.Commands.CloseCommand;
 using FluentValidation;
 using MediatR;
 using Moq;

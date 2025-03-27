@@ -16,6 +16,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<VoteBase> Votes { get; set; }
     public DbSet<SingleVote> SingleVotes { get; set; }
     public DbSet<MultipleVote> MultipleVotes { get; set; }
+    public DbSet<QuickVote> QuickVotes { get; set; }
     public DbSet<PollOption> PollOption { get; set; }
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)

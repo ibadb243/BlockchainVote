@@ -1,5 +1,5 @@
 ﻿using Application.Common.Behaviors;
-using Application.CQRS.Polls.Commands.CreateCommand.Single;
+using Application.CQRS.SinglePolls.Commands.CreateCommand;
 using FluentValidation;
 using MediatR;
 using Moq;

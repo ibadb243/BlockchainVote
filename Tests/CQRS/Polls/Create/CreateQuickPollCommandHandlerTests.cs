@@ -1,4 +1,4 @@
-﻿using Application.CQRS.Polls.Commands.CreateCommand.Quick;
+﻿using Application.CQRS.QuickPolls.Commands.CreateCommand;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
 

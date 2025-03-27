@@ -14,6 +14,7 @@ public interface IApplicationDbContext
     DbSet<VoteBase> Votes { get; }
     DbSet<SingleVote> SingleVotes { get; }
     DbSet<MultipleVote> MultipleVotes { get; }
+    DbSet<QuickVote> QuickVotes { get; }
     DbSet<PollOption> PollOption { get; }
     DbSet<Block> Blockchain { get; }
     
