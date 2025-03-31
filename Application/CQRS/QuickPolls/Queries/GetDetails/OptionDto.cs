@@ -2,7 +2,7 @@
 using AutoMapper;
 using Domain.Entities;
 
-namespace Application.CQRS.Polls.Queries.GetDetails;
+namespace Application.CQRS.QuickPolls.Queries.GetDetails;
 
 public class OptionDto : IMapWith<PollOption>
 {

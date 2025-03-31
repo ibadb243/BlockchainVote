@@ -1,10 +1,11 @@
 ﻿using Application.Common.Mappings;
 using AutoMapper;
+using Domain.Entities;
 using Domain.Entities.Abstract;
 
-namespace Application.CQRS.Polls.Queries.GetDetails;
+namespace Application.CQRS.QuickPolls.Queries.GetDetails;
 
-public class PollVm : IMapWith<PollBase>
+public class QuickPollVm : IMapWith<QuickPoll>
 {
     public string Title { get; set; }
     public string Description { get; set; }
@@ -17,7 +18,7 @@ public class PollVm : IMapWith<PollBase>
 
     public void Mapping(Profile profile)
     {
-        profile.CreateMap<PollBase, PollVm>()
+        profile.CreateMap<QuickPoll, QuickPollVm>()
             .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.Title))
             .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description))
             .ForMember(dest => dest.Type, opt => opt.MapFrom(src => src.GetType().Name))
