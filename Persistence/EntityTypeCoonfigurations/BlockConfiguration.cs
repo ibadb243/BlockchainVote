@@ -11,7 +11,7 @@ internal class BlockConfiguration : IEntityTypeConfiguration<Block>
         builder.HasKey(b => b.Id);
         builder.HasIndex(b => b.Id).IsUnique();
 
-        builder.Property(b => b.VotesJson).IsRequired().HasMaxLength(1024 * 1024);
+        builder.Property(b => b.MerkleRoot).IsRequired();
 
         builder.Property(b => b.Timestamp).IsRequired();
 

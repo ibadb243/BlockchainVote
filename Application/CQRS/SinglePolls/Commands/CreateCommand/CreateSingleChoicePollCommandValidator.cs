@@ -1,5 +1,4 @@
-﻿using Application.CQRS.Polls.Commands.CreateCommand.Single;
-using FluentValidation;
+﻿using FluentValidation;
 
 namespace Application.CQRS.SinglePolls.Commands.CreateCommand;
 
