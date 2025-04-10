@@ -17,5 +17,5 @@ public abstract class VoteBase
         Timestamp = DateTimeOffset.UtcNow;
     }
 
-    public override abstract string ToString();
+    public abstract string GetVoteHash();
 }

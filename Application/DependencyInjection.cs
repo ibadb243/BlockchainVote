@@ -22,6 +22,7 @@ public static class DependencyInjection
 
         services.AddTransient<IBlockBuilder, BlockBuilder>();
         services.AddTransient<IHashHelper, HashHelper>();
+        services.AddTransient<ITokenHelper, TokenHelper>();
 
         return services;
     }

@@ -8,22 +8,22 @@ namespace Tests.CQRS.Polls.Close;
 
 public class ClosePollCommandValidatorTests
 {
-    private readonly ValidationBehavior<ClosePollCommand, Unit> _behavior;
+    private readonly ValidationBehavior<CloseSingleChoicePollCommand, Unit> _behavior;
     private readonly Mock<RequestHandlerDelegate<Unit>> _nextMock;
-    private readonly List<IValidator<ClosePollCommand>> _validators;
+    private readonly List<IValidator<CloseSingleChoicePollCommand>> _validators;
 
     public ClosePollCommandValidatorTests()
     {
-        _validators = new List<IValidator<ClosePollCommand>>() { new ClosePollCommandValidator() };
+        _validators = new List<IValidator<CloseSingleChoicePollCommand>>() { new CloseSingleChoicePollCommandValidator() };
         _nextMock = new Mock<RequestHandlerDelegate<Unit>>();
-        _behavior = new ValidationBehavior<ClosePollCommand, Unit>(_validators);
+        _behavior = new ValidationBehavior<CloseSingleChoicePollCommand, Unit>(_validators);
     }
 
     [Fact]
     public async Task Handle_ShouldThrowValidationException_WhenInvalidRequest2()
     {
         // Arrange
-        var command = new ClosePollCommand();
+        var command = new CloseSingleChoicePollCommand();
 
         // Act
         var exception = await Assert.ThrowsAsync<ValidationException>(() => _behavior.Handle(command, _nextMock.Object, CancellationToken.None));
@@ -36,7 +36,7 @@ public class ClosePollCommandValidatorTests
     public async Task Handle_ShouldCallNext_WhenValidRequest()
     {
         // Arrange
-        var command = new ClosePollCommand()
+        var command = new CloseSingleChoicePollCommand()
         {
             UserId = Guid.NewGuid(),
             PollId = Guid.NewGuid(),

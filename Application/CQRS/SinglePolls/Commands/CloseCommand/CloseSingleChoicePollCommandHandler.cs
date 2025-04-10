@@ -4,7 +4,7 @@ using Domain.Entities.Abstract;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace Application.CQRS.Polls.Commands.CloseCommand;
+namespace Application.CQRS.SinglePolls.Commands.CloseCommand;
 
 public class CloseSingleChoicePollCommandHandler : IRequestHandler<CloseSingleChoicePollCommand, Unit>
 {

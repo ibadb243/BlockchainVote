@@ -1,5 +1,4 @@
 ﻿using Domain.Entities.Abstract;
-using System.Text;
 
 namespace Domain.Entities;
 
@@ -15,17 +14,16 @@ public class SingleVote : VoteBase
         OptionId = optionId;
     }
 
-    public override string ToString()
+    public override string GetVoteHash()
     {
-        var builder = new StringBuilder();
+        var rawData = $"{Id}{PollId}{UserId}{Timestamp}{OptionId}";
+        return ComputeHash(rawData);
+    }
 
-        builder
-            .Append(Id)
-            .Append(PollId)
-            .Append(UserId)
-            .Append(OptionId)
-            .Append(Timestamp);
-
-        return builder.ToString();
+    private string ComputeHash(string input)
+    {
+        using var sha512 = System.Security.Cryptography.SHA512.Create();
+        var bytes = sha512.ComputeHash(System.Text.Encoding.UTF8.GetBytes(input));
+        return Convert.ToBase64String(bytes);
     }
 }

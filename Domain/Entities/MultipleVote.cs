@@ -15,17 +15,16 @@ public class MultipleVote : VoteBase
         Options = options;
     }
 
-    public override string ToString()
+    public override string GetVoteHash()
     {
-        var builder = new StringBuilder();
+        var rawData = $"{Id}{PollId}{UserId}{Timestamp}{Options}";
+        return ComputeHash(rawData);
+    }
 
-        builder
-            .Append(Id)
-            .Append(PollId)
-            .Append(UserId)
-            .Append(Options)
-            .Append(Timestamp);
-
-        return builder.ToString();
+    private string ComputeHash(string input)
+    {
+        using var sha512 = System.Security.Cryptography.SHA512.Create();
+        var bytes = sha512.ComputeHash(System.Text.Encoding.UTF8.GetBytes(input));
+        return Convert.ToBase64String(bytes);
     }
 }

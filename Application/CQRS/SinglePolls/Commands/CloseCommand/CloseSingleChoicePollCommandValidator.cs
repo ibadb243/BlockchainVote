@@ -1,6 +1,6 @@
 ﻿using FluentValidation;
 
-namespace Application.CQRS.Polls.Commands.CloseCommand;
+namespace Application.CQRS.SinglePolls.Commands.CloseCommand;
 
 public class CloseSingleChoicePollCommandValidator : AbstractValidator<CloseSingleChoicePollCommand>
 {

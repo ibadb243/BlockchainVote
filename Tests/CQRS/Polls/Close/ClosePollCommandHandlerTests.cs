@@ -9,7 +9,7 @@ namespace Tests.CQRS.Polls.Close;
 
 public class ClosePollCommandHandlerTests
 {
-    private readonly ClosePollCommandHandler _handler;
+    private readonly CloseSingleChoicePollCommandHandler _handler;
     private readonly ApplicationDbContext _context;
 
     public ClosePollCommandHandlerTests()
@@ -20,7 +20,7 @@ public class ClosePollCommandHandlerTests
 
         _context = new ApplicationDbContext(options);
 
-        _handler = new ClosePollCommandHandler(_context);
+        _handler = new CloseSingleChoicePollCommandHandler(_context);
     }
 
     [Fact]
@@ -36,7 +36,7 @@ public class ClosePollCommandHandlerTests
         };
         await _context.SingleChoicePolls.AddAsync(poll);
         await _context.SaveChangesAsync();
-        var command = new ClosePollCommand
+        var command = new CloseSingleChoicePollCommand
         {
             UserId = poll.UserId,
             PollId = poll.Id,
@@ -65,7 +65,7 @@ public class ClosePollCommandHandlerTests
         };
         await _context.SingleChoicePolls.AddAsync(poll);
         await _context.SaveChangesAsync();
-        var command = new ClosePollCommand
+        var command = new CloseSingleChoicePollCommand
         {
             UserId = poll.UserId,
             PollId = poll.Id,
@@ -94,7 +94,7 @@ public class ClosePollCommandHandlerTests
         };
         await _context.SingleChoicePolls.AddAsync(poll);
         await _context.SaveChangesAsync();
-        var command = new ClosePollCommand
+        var command = new CloseSingleChoicePollCommand
         {
             UserId = poll.UserId,
             PollId = poll.Id,
@@ -122,7 +122,7 @@ public class ClosePollCommandHandlerTests
         };
         await _context.SingleChoicePolls.AddAsync(poll);
         await _context.SaveChangesAsync();
-        var command = new ClosePollCommand
+        var command = new CloseSingleChoicePollCommand
         {
             UserId = Guid.NewGuid(),
             PollId = poll.Id,
@@ -149,7 +149,7 @@ public class ClosePollCommandHandlerTests
         };
         await _context.SingleChoicePolls.AddAsync(poll);
         await _context.SaveChangesAsync();
-        var command = new ClosePollCommand
+        var command = new CloseSingleChoicePollCommand
         {
             UserId = poll.UserId,
             PollId = Guid.NewGuid(),

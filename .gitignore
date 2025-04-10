@@ -3,3 +3,9 @@ obj/
 /packages/
 riderModule.iml
 /_ReSharper.Caches/
+.git/
+.github/
+.idea/
+.vs/
+WebAPI/appsettings.json
+WebAPI/appsettings.Development.json

@@ -11,7 +11,7 @@ public class CreateSingleChoicePollCommandValidator : AbstractValidator<CreateSi
         RuleFor(x => x.Description).MaximumLength(4096);
         RuleFor(x => x.StartDate).Must(s => s.AddMinutes(1) > DateTimeOffset.UtcNow);
         RuleFor(x => x.EndDate).Must((c, e) => e == null || e >= c.StartDate.AddMinutes(30));
-        RuleFor(x => x.Options).Must(o => o.Count() > 0 && o.Count() < 32);
+        RuleFor(x => x.Options).Must(o => o.Count() > 0 && o.Count() < 32).WithMessage("Must be greater 0 and less 32");
         RuleForEach(x => x.Options).SetValidator(new OptionValidator());
     }
 }
