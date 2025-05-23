@@ -13,11 +13,16 @@ namespace Application.CQRS.Commands.CreatePoll
     public class CreatePollCommandHandler : IRequestHandler<CreatePollCommand, Guid>
     {
         private readonly IPollRepository _pollRepository;
+        private readonly IUnitOfWork _unitOfÜork;
         private readonly IMapper _mapper;
 
-        public CreatePollCommandHandler(IPollRepository pollRepository, IMapper mapper)
+        public CreatePollCommandHandler(
+            IPollRepository pollRepository,
+            IUnitOfWork unitOfWork,
+            IMapper mapper)
         {
             _pollRepository = pollRepository;
+            _unitOfÜork = unitOfWork;
             _mapper = mapper;
         }
 
@@ -49,7 +54,9 @@ namespace Application.CQRS.Commands.CreatePoll
                 candidate.Poll = poll;
             }
 
-            await _pollRepository.AddAsync(poll);
+            await _pollRepository.AddAsync(poll, cancellationToken);
+            await _unitOfÜork.SaveChangesAsync(cancellationToken);
+
             return poll.Id;
         }
     }

@@ -13,32 +13,35 @@ namespace Application.CQRS.Commands.RefreshToken
     {
         private readonly IUserRepository _userRepository;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly ITokenService _tokenService;
 
         public RefreshTokenCommandHandler(
             IUserRepository userRepository,
             IRefreshTokenRepository refreshTokenRepository,
+            IUnitOfWork unitOfWork,
             ITokenService tokenService)
         {
             _userRepository = userRepository;
             _refreshTokenRepository = refreshTokenRepository;
+            _unitOfWork = unitOfWork;
             _tokenService = tokenService;
         }
 
         public async Task<TokenResponse> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
         {
-            var token = await _refreshTokenRepository.GetByTokenAsync(request.RefreshToken);
+            var token = await _refreshTokenRepository.GetByTokenAsync(request.RefreshToken, cancellationToken);
             if (token == null || token.ExpiresAt < DateTime.UtcNow)
                 throw new Exception("Invalid or expired refresh token");
 
-            var user = await _userRepository.GetByIdAsync(token.UserId);
+            var user = await _userRepository.GetByIdAsync(token.UserId, cancellationToken);
             if (user == null)
                 throw new Exception("User not found");
 
             var accessToken = _tokenService.GenerateAccessToken(user);
             var newRefreshToken = _tokenService.GenerateRefreshToken();
 
-            await _refreshTokenRepository.DeleteAsync(user.Id); // Удаляем старый токен
+            await _refreshTokenRepository.DeleteAsync(user.Id, cancellationToken); // Удаляем старый токен
 
             var newToken = new Domain.Entities.RefreshToken
             {
@@ -50,7 +53,8 @@ namespace Application.CQRS.Commands.RefreshToken
                 User = user
             };
 
-            await _refreshTokenRepository.AddAsync(newToken);
+            await _refreshTokenRepository.AddAsync(newToken, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
             return new TokenResponse(accessToken, newRefreshToken);
         }
     }

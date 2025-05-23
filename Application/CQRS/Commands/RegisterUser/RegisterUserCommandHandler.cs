@@ -15,24 +15,27 @@ namespace Application.CQRS.Commands.RegisterUser
     {
         private readonly IUserRepository _userRepository;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly ITokenService _tokenService;
         private readonly IPasswordHasher _passwordHasher;
 
         public RegisterUserCommandHandler(
             IUserRepository userRepository,
             IRefreshTokenRepository refreshTokenRepository,
+            IUnitOfWork unitOfWork,
             ITokenService tokenService,
             IPasswordHasher passwordHasher)
         {
             _userRepository = userRepository;
             _refreshTokenRepository = refreshTokenRepository;
+            _unitOfWork = unitOfWork;
             _tokenService = tokenService;
             _passwordHasher = passwordHasher;
         }
 
         public async Task<TokenResponse> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
         {
-            if (await _userRepository.GetByEmailAsync(request.Email) != null)
+            if (await _userRepository.GetByEmailAsync(request.Email, cancellationToken) != null)
                 throw new Exception("Email already exists");
 
             var user = new User
@@ -57,7 +60,8 @@ namespace Application.CQRS.Commands.RegisterUser
                 User = user
             };
 
-            await _refreshTokenRepository.AddAsync(token);
+            await _refreshTokenRepository.AddAsync(token, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
             return new TokenResponse(accessToken, refreshToken);
         }
     }

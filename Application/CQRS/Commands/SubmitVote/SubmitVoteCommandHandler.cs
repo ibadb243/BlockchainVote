@@ -17,26 +17,29 @@ namespace Application.CQRS.Commands.SubmitVote
         private readonly IPollRepository _pollRepository;
         private readonly IVoteRepository _voteRepository;
         private readonly IPendingVoteRepository _pendingVoteRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
         public SubmitVoteCommandHandler(
             IUserRepository userRepository,
             IPollRepository pollRepository,
             IVoteRepository voteRepository,
-            IPendingVoteRepository pendingVoteRepository)
+            IPendingVoteRepository pendingVoteRepository,
+            IUnitOfWork unitOfWork)
         {
             _userRepository = userRepository;
             _pollRepository = pollRepository;
             _voteRepository = voteRepository;
             _pendingVoteRepository = pendingVoteRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<Guid> Handle(SubmitVoteCommand request, CancellationToken cancellationToken)
         {
-            var user = await _userRepository.GetByIdAsync(request.UserId);
+            var user = await _userRepository.GetByIdAsync(request.UserId, cancellationToken);
             if (user == null)
                 throw new Exception("User not found");
 
-            var poll = await _pollRepository.GetByIdAsync(request.PollId);
+            var poll = await _pollRepository.GetByIdAsync(request.PollId, cancellationToken);
             if (poll == null)
                 throw new Exception("Poll not found");
 
@@ -53,7 +56,7 @@ namespace Application.CQRS.Commands.SubmitVote
             if (poll.IsSurvey && poll.MaxSelections.HasValue && request.CandidateIds.Count > poll.MaxSelections.Value)
                 throw new Exception($"Cannot select more than {poll.MaxSelections.Value} candidates");
 
-            var existingVote = await _voteRepository.GetByUserAndPollAsync(request.UserId, request.PollId);
+            var existingVote = await _voteRepository.GetByUserAndPollAsync(request.UserId, request.PollId, cancellationToken);
             if (existingVote != null)
             {
                 if (!poll.AllowRevote)
@@ -70,7 +73,7 @@ namespace Application.CQRS.Commands.SubmitVote
                     Candidate = poll.Candidates.First(c => c.Id == id)
                 }));
 
-                await _voteRepository.UpdateAsync(existingVote);
+                await _voteRepository.UpdateAsync(existingVote, cancellationToken);
                 await _pendingVoteRepository.AddAsync(new PendingVote()
                 {
                     VoteId = existingVote.Id,
@@ -78,7 +81,7 @@ namespace Application.CQRS.Commands.SubmitVote
                     PollId = existingVote.PollId,
                     Timestamp = existingVote.Timestamp,
                     CandidateIds = request.CandidateIds,
-                });
+                }, cancellationToken);
                 return existingVote.Id;
             }
 
@@ -106,7 +109,7 @@ namespace Application.CQRS.Commands.SubmitVote
                 voteCandidate.Vote = vote;
             }
 
-            await _voteRepository.AddAsync(vote);
+            await _voteRepository.AddAsync(vote, cancellationToken);
             await _pendingVoteRepository.AddAsync(new PendingVote() 
             { 
                 VoteId = vote.Id,
@@ -114,7 +117,8 @@ namespace Application.CQRS.Commands.SubmitVote
                 PollId = vote.PollId,
                 Timestamp = vote.Timestamp,
                 CandidateIds = request.CandidateIds,
-            });
+            }, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
             return vote.Id;
         }
     }
