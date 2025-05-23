@@ -9,9 +9,9 @@ namespace Application.Interfaces.Repositories
 {
     public interface IPendingVoteRepository
     {
-        Task<IList<PendingVote>> GetAllAsync();
-        Task AddAsync(PendingVote vote);
-        Task DeleteAllAsync();
-        Task DeleteRangeAsync(IEnumerable<PendingVote> votes);
+        Task<IList<PendingVote>> GetAllAsync(CancellationToken cancellationToken = default);
+        Task AddAsync(PendingVote vote, CancellationToken cancellationToken = default);
+        Task DeleteAllAsync(CancellationToken cancellationToken = default);
+        Task DeleteRangeAsync(IEnumerable<PendingVote> votes, CancellationToken cancellationToken = default);
     }
 }

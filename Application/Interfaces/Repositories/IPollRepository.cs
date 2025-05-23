@@ -9,7 +9,7 @@ namespace Application.Interfaces.Repositories
 {
     public interface IPollRepository
     {
-        Task<Poll?> GetByIdAsync(Guid id);
-        Task AddAsync(Poll poll);
+        Task<Poll?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+        Task AddAsync(Poll poll, CancellationToken cancellationToken = default);
     }
 }

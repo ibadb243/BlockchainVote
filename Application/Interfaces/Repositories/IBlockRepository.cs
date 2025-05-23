@@ -10,8 +10,8 @@ namespace Application.Interfaces.Repositories
     public interface IBlockRepository
     {
         IQueryable<Block> GetAllQuery();
-        Task<Block?> GetByHashAsync(string hash);
-        Task<Block> GetLastAsync();
-        Task AddAsync(Block block);
+        Task<Block?> GetByHashAsync(string hash, CancellationToken cancellationToken = default);
+        Task<Block> GetLastAsync(CancellationToken cancellationToken = default);
+        Task AddAsync(Block block, CancellationToken cancellationToken = default);
     }
 }
