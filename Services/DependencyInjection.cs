@@ -14,7 +14,6 @@ namespace Services
         {
             services.AddScoped<IPasswordHasher, PasswordHasher>();
             services.AddScoped<ITokenService, TokenService>();
-            services.AddScoped<ICacheService, RedisCacheService>();
             services.AddScoped<IBlockService, BlockService>();
             services.AddScoped<IMerkleTreeService, MerkleTreeService>();
             services.AddScoped<ITransactionConverterService, TransactionConverterService>();
