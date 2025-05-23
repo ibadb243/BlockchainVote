@@ -16,34 +16,34 @@ namespace Persistence.Repositories
 
         public VoteRepository(VoteChainDbContext context) => _context = context;
 
-        public async Task<Vote?> GetByIdAsync(Guid id)
+        public async Task<Vote?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
             => await _context.Votes
                 .Include(v => v.Candidates)
                 .Include(v => v.Poll)
-                .FirstOrDefaultAsync(v => v.Id == id);
+                .FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
 
-        public async Task<Vote?> GetByUserAndPollAsync(Guid userId, Guid pollId)
+        public async Task<Vote?> GetByUserAndPollAsync(Guid userId, Guid pollId, CancellationToken cancellationToken = default)
             => await _context.Votes
                 .Include(v => v.Candidates)
                 .Include(v => v.Poll)
-                .FirstOrDefaultAsync(v => v.UserId == userId && v.PollId == pollId);
+                .FirstOrDefaultAsync(v => v.UserId == userId && v.PollId == pollId, cancellationToken);
 
-        public async Task AddAsync(Vote vote)
+        public async Task AddAsync(Vote vote, CancellationToken cancellationToken = default)
         {
-            await _context.Votes.AddAsync(vote);
-            await _context.SaveChangesAsync();
+            await _context.Votes.AddAsync(vote, cancellationToken);
         }
 
-        public async Task UpdateAsync(Vote vote)
+        public Task UpdateAsync(Vote vote, CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             _context.Votes.Update(vote);
-            await _context.SaveChangesAsync();
+            return Task.CompletedTask;
         }
 
-        public async Task<List<Vote>> GetByPollAsync(Guid pollId)
+        public async Task<List<Vote>> GetByPollAsync(Guid pollId, CancellationToken cancellationToken = default)
             => await _context.Votes
                 .Include(v => v.Candidates)
                 .Where(v => v.PollId == pollId)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
     }
 }

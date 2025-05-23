@@ -16,13 +16,12 @@ namespace Persistence.Repositories
 
         public PollRepository(VoteChainDbContext context) => _context = context;
 
-        public async Task<Poll?> GetByIdAsync(Guid id)
-            => await _context.Polls.Include(p => p.Candidates).FirstOrDefaultAsync(p => p.Id == id);
+        public async Task<Poll?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+            => await _context.Polls.Include(p => p.Candidates).FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
-        public async Task AddAsync(Poll poll)
+        public async Task AddAsync(Poll poll, CancellationToken cancellationToken = default)
         {
-            await _context.Polls.AddAsync(poll);
-            await _context.SaveChangesAsync();
+            await _context.Polls.AddAsync(poll, cancellationToken);
         }
     }
 }

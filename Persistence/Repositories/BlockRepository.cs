@@ -16,16 +16,18 @@ namespace Persistence.Repositories
 
         public BlockRepository(VoteChainDbContext context) => _context = context;
 
-        public async Task AddAsync(Block block)
+        public async Task AddAsync(Block block, CancellationToken cancellationToken = default)
         {
-            await _context.AddAsync(block);
-            await _context.SaveChangesAsync();
+            await _context.AddAsync(block, cancellationToken);
         }
 
         public IQueryable<Block> GetAllQuery() => _context.Blocks.AsQueryable();
 
-        public async Task<Block?> GetByHashAsync(string hash) => await _context.Blocks.SingleOrDefaultAsync(b => b.Hash == hash);
+        public async Task<Block?> GetByHashAsync(string hash, CancellationToken cancellationToken = default) => await _context.Blocks
+            .SingleOrDefaultAsync(b => b.Hash == hash, cancellationToken);
 
-        public async Task<Block> GetLastAsync() => await _context.Blocks.OrderByDescending(b => b.Id).FirstAsync();
+        public async Task<Block> GetLastAsync(CancellationToken cancellationToken) => await _context.Blocks
+            .OrderByDescending(b => b.Id)
+            .FirstAsync(cancellationToken);
     }
 }

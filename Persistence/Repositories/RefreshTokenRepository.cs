@@ -18,20 +18,20 @@ namespace Persistence.Repositories
 
         public RefreshTokenRepository(VoteChainDbContext context) => _context = context;
 
-        public async Task<RefreshToken?> GetByTokenAsync(string token)
-            => await _context.RefreshTokens.FirstOrDefaultAsync(t => t.Token == token);
+        public async Task<RefreshToken?> GetByTokenAsync(string token, CancellationToken cancellationToken = default)
+            => await _context.RefreshTokens.FirstOrDefaultAsync(t => t.Token == token, cancellationToken);
 
-        public async Task AddAsync(RefreshToken token)
+        public async Task AddAsync(RefreshToken token, CancellationToken cancellationToken = default)
         {
-            await _context.RefreshTokens.AddAsync(token);
-            await _context.SaveChangesAsync();
+            await _context.RefreshTokens.AddAsync(token, cancellationToken);
         }
 
-        public async Task DeleteAsync(Guid userId)
+        public async Task DeleteAsync(Guid userId, CancellationToken cancellationToken = default)
         {
-            var tokens = await _context.RefreshTokens.Where(t => t.UserId == userId).ToListAsync();
+            var tokens = await _context.RefreshTokens
+                .Where(t => t.UserId == userId)
+                .ToListAsync(cancellationToken);
             _context.RefreshTokens.RemoveRange(tokens);
-            await _context.SaveChangesAsync();
         }
     }
 }

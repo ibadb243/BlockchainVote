@@ -16,24 +16,24 @@ namespace Persistence.Repositories
 
         public PendingVoteRepository(VoteChainDbContext context) => _context = context;
 
-        public async Task AddAsync(PendingVote vote)
+        public async Task AddAsync(PendingVote vote, CancellationToken cancellationToken = default)
         {
-            await _context.PendingVotes.AddAsync(vote);
-            await _context.SaveChangesAsync();
+            await _context.PendingVotes.AddAsync(vote, cancellationToken);
         }
             
-        public async Task<IList<PendingVote>> GetAllAsync() => await _context.PendingVotes.ToListAsync();
+        public async Task<IList<PendingVote>> GetAllAsync(CancellationToken cancellationToken) => await _context.PendingVotes
+            .ToListAsync(cancellationToken);
 
-        public async Task DeleteAllAsync()
+        public async Task DeleteAllAsync(CancellationToken cancellationToken)
         {
-            await _context.PendingVotes.ExecuteDeleteAsync();
-            await _context.SaveChangesAsync();
+            await _context.PendingVotes.ExecuteDeleteAsync(cancellationToken);
         }
 
-        public async Task DeleteRangeAsync(IEnumerable<PendingVote> votes)
+        public Task DeleteRangeAsync(IEnumerable<PendingVote> votes, CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             _context.PendingVotes.RemoveRange(votes);
-            await _context.SaveChangesAsync();
+            return Task.CompletedTask;
         }
     }
 }
