@@ -31,7 +31,7 @@ namespace Application.CQRS.Queries.GetBlockList
                 .Skip(request.Offset)
                 .Take(request.Limit)
                 .ProjectTo<BlockDto>(_mapper.ConfigurationProvider)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             return blocks;
         }

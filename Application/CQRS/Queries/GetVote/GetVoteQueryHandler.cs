@@ -22,7 +22,7 @@ namespace Application.CQRS.Queries.GetVote
 
         public async Task<VoteVerificationDto?> Handle(GetVoteQuery request, CancellationToken cancellationToken)
         {
-            var vote = await _voteRepository.GetByIdAsync(request.Id);
+            var vote = await _voteRepository.GetByIdAsync(request.Id, cancellationToken);
             return vote == null ? null : _mapper.Map<VoteVerificationDto>(vote);
         }
     }

@@ -24,11 +24,11 @@ namespace Application.CQRS.Queries.GetPollResults
 
         public async Task<Dictionary<int, int>> Handle(GetPollResultsQuery request, CancellationToken cancellationToken)
         {
-            var poll = await _pollRepository.GetByIdAsync(request.PollId);
+            var poll = await _pollRepository.GetByIdAsync(request.PollId, cancellationToken);
             if (poll == null)
                 throw new Exception("Poll not found");
 
-            var votes = await _voteRepository.GetByPollAsync(request.PollId);
+            var votes = await _voteRepository.GetByPollAsync(request.PollId, cancellationToken);
             var candidateIds = poll.Candidates.Select(c => c.Id).ToList();
             var results = candidateIds.ToDictionary(id => id, id => 0);
 

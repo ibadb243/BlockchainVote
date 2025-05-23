@@ -22,7 +22,7 @@ namespace Application.CQRS.Queries.GetUser
 
         public async Task<UserDto?> Handle(GetUserQuery request, CancellationToken cancellationToken)
         {
-            var user = await _userRepository.GetByIdAsync(request.Id);
+            var user = await _userRepository.GetByIdAsync(request.Id, cancellationToken);
             return user == null ? null : _mapper.Map<UserDto>(user);
         }
     }

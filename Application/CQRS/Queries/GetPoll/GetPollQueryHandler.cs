@@ -22,7 +22,7 @@ namespace Application.CQRS.Queries.GetPoll
 
         public async Task<PollDto?> Handle(GetPollQuery request, CancellationToken cancellationToken)
         {
-            var poll = await _pollRepository.GetByIdAsync(request.Id);
+            var poll = await _pollRepository.GetByIdAsync(request.Id, cancellationToken);
             return poll == null ? null : _mapper.Map<PollDto>(poll);
         }
     }
