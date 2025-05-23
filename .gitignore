@@ -5,7 +5,5 @@ riderModule.iml
 /_ReSharper.Caches/
 .idea/
 .vs/
-Application/Application.csproj.user
 *.db
-*.json
 *.user
