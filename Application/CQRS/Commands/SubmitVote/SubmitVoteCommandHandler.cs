@@ -17,20 +17,17 @@ namespace Application.CQRS.Commands.SubmitVote
         private readonly IPollRepository _pollRepository;
         private readonly IVoteRepository _voteRepository;
         private readonly IPendingVoteRepository _pendingVoteRepository;
-        private readonly ICacheService _cacheService;
 
         public SubmitVoteCommandHandler(
             IUserRepository userRepository,
             IPollRepository pollRepository,
             IVoteRepository voteRepository,
-            IPendingVoteRepository pendingVoteRepository,
-            ICacheService cacheService)
+            IPendingVoteRepository pendingVoteRepository)
         {
             _userRepository = userRepository;
             _pollRepository = pollRepository;
             _voteRepository = voteRepository;
             _pendingVoteRepository = pendingVoteRepository;
-            _cacheService = cacheService;
         }
 
         public async Task<Guid> Handle(SubmitVoteCommand request, CancellationToken cancellationToken)
@@ -67,6 +64,7 @@ namespace Application.CQRS.Commands.SubmitVote
                 existingVote.Candidates.AddRange(request.CandidateIds.Select(id => new VoteCandidate
                 {
                     VoteId = existingVote.Id,
+                    PollId = existingVote.PollId,
                     CandidateId = id,
                     Vote = existingVote,
                     Candidate = poll.Candidates.First(c => c.Id == id)
@@ -81,7 +79,6 @@ namespace Application.CQRS.Commands.SubmitVote
                     Timestamp = existingVote.Timestamp,
                     CandidateIds = request.CandidateIds,
                 });
-                await _cacheService.RemoveAsync($"PollResults_{request.PollId}");
                 return existingVote.Id;
             }
 
@@ -96,6 +93,7 @@ namespace Application.CQRS.Commands.SubmitVote
                 Candidates = request.CandidateIds.Select(id => new VoteCandidate
                 {
                     VoteId = Guid.Empty,
+                    PollId = Guid.Empty,
                     CandidateId = id,
                     Candidate = poll.Candidates.First(c => c.Id == id)
                 }).ToList()
@@ -103,6 +101,7 @@ namespace Application.CQRS.Commands.SubmitVote
 
             foreach (var voteCandidate in vote.Candidates)
             {
+                voteCandidate.PollId = vote.PollId;
                 voteCandidate.VoteId = vote.Id;
                 voteCandidate.Vote = vote;
             }
@@ -116,7 +115,6 @@ namespace Application.CQRS.Commands.SubmitVote
                 Timestamp = vote.Timestamp,
                 CandidateIds = request.CandidateIds,
             });
-            await _cacheService.RemoveAsync($"PollResults_{request.PollId}");
             return vote.Id;
         }
     }

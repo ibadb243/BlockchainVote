@@ -26,6 +26,6 @@ namespace Persistence.Repositories
 
         public async Task<Block?> GetByHashAsync(string hash) => await _context.Blocks.SingleOrDefaultAsync(b => b.Hash == hash);
 
-        public async Task<Block> GetLastAsync() => await _context.Blocks.LastAsync();
+        public async Task<Block> GetLastAsync() => await _context.Blocks.OrderByDescending(b => b.Id).FirstAsync();
     }
 }

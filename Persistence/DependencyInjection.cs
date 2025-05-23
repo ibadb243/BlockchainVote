@@ -16,7 +16,7 @@ namespace Persistence
     {
         public static IServiceCollection AddPersistence(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddDbContext<VoteChainDbContext>(opt => opt.UseSqlite(configuration.GetConnectionString("SQLite")));
+            services.AddDbContext<VoteChainDbContext>(opt => opt.UseNpgsql(configuration.GetConnectionString("Postgres")));
 
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IPollRepository, PollRepository>();
@@ -24,6 +24,12 @@ namespace Persistence
             services.AddScoped<IPendingVoteRepository, PendingVoteRepository>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
             services.AddScoped<IBlockRepository, BlockRepository>();
+
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = configuration.GetConnectionString("Redis");
+                options.InstanceName = "votechain_";
+            });
 
             return services;
         }

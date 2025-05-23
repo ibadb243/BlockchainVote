@@ -24,67 +24,7 @@ namespace Persistence.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<User>()
-                .HasIndex(u => u.Email)
-                .IsUnique();
-
-            modelBuilder.Entity<User>()
-                .HasMany(u => u.Votes)
-                .WithOne(v => v.User)
-                .HasForeignKey(v => v.UserId);
-
-            modelBuilder.Entity<Poll>()
-                .HasMany(p => p.Candidates)
-                .WithOne(c => c.Poll)
-                .HasForeignKey(c => c.PollId);
-
-            modelBuilder.Entity<Poll>()
-                .HasMany(p => p.Votes)
-                .WithOne(v => v.Poll)
-                .HasForeignKey(v => v.PollId);
-
-            modelBuilder.Entity<Vote>()
-                .HasIndex(v => new { v.UserId, v.PollId })
-                .IsUnique();
-
-            modelBuilder.Entity<Candidate>()
-                .HasIndex(c => new { c.PollId, c.Id })
-                .IsUnique();
-
-            modelBuilder.Entity<VoteCandidate>()
-                .HasKey(vc => new { vc.VoteId, vc.CandidateId });
-
-            modelBuilder.Entity<VoteCandidate>()
-                .HasOne(vc => vc.Vote)
-                .WithMany(v => v.Candidates)
-                .HasForeignKey(vc => vc.VoteId);
-
-            modelBuilder.Entity<VoteCandidate>()
-                .HasOne(vc => vc.Candidate)
-                .WithMany(c => c.VoteCandidates)
-                .HasForeignKey(vc => vc.CandidateId);
-
-            modelBuilder.Entity<VoteCandidate>()
-                .HasIndex(vc => vc.VoteId);
-
-            modelBuilder.Entity<VoteCandidate>()
-                .HasIndex(vc => vc.CandidateId);
-
-            modelBuilder.Entity<RefreshToken>()
-                .HasIndex(t => t.Token)
-                .IsUnique();
-
-            modelBuilder.Entity<Block>()
-                .OwnsMany(b => b.Transactions, builder => builder.ToJson());
-
-            modelBuilder.Entity<Block>()
-                .HasKey(b => b.Hash);
-
-            modelBuilder.Entity<Block>()
-                .HasIndex(b => b.Hash);
-
-            modelBuilder.Entity<PendingVote>()
-                .HasNoKey();
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(VoteChainDbContext).Assembly);
         }
     }
 }

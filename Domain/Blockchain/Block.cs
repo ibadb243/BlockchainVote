@@ -8,6 +8,7 @@ namespace Domain.Blockchain
 {
     public class Block
     {
+        public long Id { get; set; }
         public DateTime Timestamp { get; set; }
         public string MerkleRoot { get; set; }
         public List<BlockTransaction> Transactions { get; set; }

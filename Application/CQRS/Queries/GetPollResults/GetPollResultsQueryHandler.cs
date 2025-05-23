@@ -13,27 +13,17 @@ namespace Application.CQRS.Queries.GetPollResults
     {
         private readonly IVoteRepository _voteRepository;
         private readonly IPollRepository _pollRepository;
-        private readonly ICacheService _cacheService;
 
         public GetPollResultsQueryHandler(
             IVoteRepository voteRepository,
-            IPollRepository pollRepository,
-            ICacheService cacheService)
+            IPollRepository pollRepository)
         {
             _voteRepository = voteRepository;
             _pollRepository = pollRepository;
-            _cacheService = cacheService;
         }
 
         public async Task<Dictionary<int, int>> Handle(GetPollResultsQuery request, CancellationToken cancellationToken)
         {
-            var cacheKey = $"PollResults_{request.PollId}";
-            var cachedResults = await _cacheService.GetAsync<Dictionary<int, int>>(cacheKey);
-            if (cachedResults != null)
-            {
-                return cachedResults;
-            }
-
             var poll = await _pollRepository.GetByIdAsync(request.PollId);
             if (poll == null)
                 throw new Exception("Poll not found");
@@ -51,7 +41,6 @@ namespace Application.CQRS.Queries.GetPollResults
                 }
             }
 
-            await _cacheService.SetAsync(cacheKey, results);
             return results;
         }
     }
