@@ -2,6 +2,7 @@
 using AutoMapper;
 using Domain.Entities;
 using MediatR;
+using Microsoft.Extensions.Caching.Hybrid;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,15 +15,18 @@ namespace Application.CQRS.Commands.CreatePoll
     {
         private readonly IPollRepository _pollRepository;
         private readonly IUnitOfWork _unitOfÜork;
+        private readonly HybridCache _cache;
         private readonly IMapper _mapper;
 
         public CreatePollCommandHandler(
             IPollRepository pollRepository,
             IUnitOfWork unitOfWork,
+            HybridCache cache,
             IMapper mapper)
         {
             _pollRepository = pollRepository;
             _unitOfÜork = unitOfWork;
+            _cache = cache;
             _mapper = mapper;
         }
 
@@ -56,6 +60,10 @@ namespace Application.CQRS.Commands.CreatePoll
 
             await _pollRepository.AddAsync(poll, cancellationToken);
             await _unitOfÜork.SaveChangesAsync(cancellationToken);
+
+            await _cache.SetAsync<Poll>($"poll-{poll.Id}", poll,
+                tags: ["poll"],
+                cancellationToken: cancellationToken);
 
             return poll.Id;
         }

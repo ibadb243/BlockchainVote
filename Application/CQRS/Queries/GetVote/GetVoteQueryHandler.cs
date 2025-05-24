@@ -1,6 +1,7 @@
 ﻿using Application.Interfaces.Repositories;
 using AutoMapper;
 using MediatR;
+using Microsoft.Extensions.Caching.Hybrid;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,18 +13,30 @@ namespace Application.CQRS.Queries.GetVote
     public class GetVoteQueryHandler : IRequestHandler<GetVoteQuery, VoteVerificationDto?>
     {
         private readonly IVoteRepository _voteRepository;
+        private readonly HybridCache _cache;
         private readonly IMapper _mapper;
 
-        public GetVoteQueryHandler(IVoteRepository voteRepository, IMapper mapper)
+        public GetVoteQueryHandler(
+            IVoteRepository voteRepository,
+            HybridCache cache,
+            IMapper mapper)
         {
             _voteRepository = voteRepository;
+            _cache = cache;
             _mapper = mapper;
         }
 
         public async Task<VoteVerificationDto?> Handle(GetVoteQuery request, CancellationToken cancellationToken)
         {
-            var vote = await _voteRepository.GetByIdAsync(request.Id, cancellationToken);
-            return vote == null ? null : _mapper.Map<VoteVerificationDto>(vote);
+            var cachedVote = await _cache.GetOrCreateAsync($"vote-{request.Id}", async token =>
+            {
+                var vote = await _voteRepository.GetByIdAsync(request.Id, token);
+                return vote;
+            },
+            tags: ["vote"],
+            cancellationToken: cancellationToken);
+            
+            return cachedVote == null ? null : _mapper.Map<VoteVerificationDto>(cachedVote);
         }
     }
 }

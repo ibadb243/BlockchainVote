@@ -3,6 +3,7 @@ using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Domain.Entities;
 using MediatR;
+using Microsoft.Extensions.Caching.Hybrid;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +17,7 @@ namespace Application.CQRS.Commands.RegisterUser
         private readonly IUserRepository _userRepository;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly HybridCache _cache;
         private readonly ITokenService _tokenService;
         private readonly IPasswordHasher _passwordHasher;
 
@@ -23,12 +25,14 @@ namespace Application.CQRS.Commands.RegisterUser
             IUserRepository userRepository,
             IRefreshTokenRepository refreshTokenRepository,
             IUnitOfWork unitOfWork,
+            HybridCache cache,
             ITokenService tokenService,
             IPasswordHasher passwordHasher)
         {
             _userRepository = userRepository;
             _refreshTokenRepository = refreshTokenRepository;
             _unitOfWork = unitOfWork;
+            _cache = cache;
             _tokenService = tokenService;
             _passwordHasher = passwordHasher;
         }
@@ -62,6 +66,11 @@ namespace Application.CQRS.Commands.RegisterUser
 
             await _refreshTokenRepository.AddAsync(token, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            await _cache.SetAsync($"user-{user.Id}", user,
+                tags: ["user"],
+                cancellationToken: cancellationToken);
+
             return new TokenResponse(accessToken, refreshToken);
         }
     }
