@@ -1,4 +1,5 @@
 ﻿using Application.CQRS.Commands.Login;
+using Ardalis.Result;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -8,5 +9,6 @@ using System.Threading.Tasks;
 
 namespace Application.CQRS.Commands.RefreshToken
 {
-    public record RefreshTokenCommand(string RefreshToken) : IRequest<TokenResponse>;
+    public record RefreshTokenCommand(string RefreshToken) 
+        : IRequest<Result<TokenResponse>>;
 }

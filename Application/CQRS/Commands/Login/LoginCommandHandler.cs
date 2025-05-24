@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Ardalis.Result;
 using MediatR;
 using Microsoft.Extensions.Caching.Hybrid;
 using System;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Application.CQRS.Commands.Login
 {
-    public class LoginCommandHandler : IRequestHandler<LoginCommand, TokenResponse>
+    public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<TokenResponse>>
     {
         private readonly IUserRepository _userRepository;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
@@ -35,11 +36,11 @@ namespace Application.CQRS.Commands.Login
             _passwordHasher = passwordHasher;
         }
 
-        public async Task<TokenResponse> Handle(LoginCommand request, CancellationToken cancellationToken)
+        public async Task<Result<TokenResponse>> Handle(LoginCommand request, CancellationToken cancellationToken)
         {
             var user = await _userRepository.GetByEmailAsync(request.Email, cancellationToken);
             if (user == null || !_passwordHasher.VerifyPassword(request.Password, user.PasswordHash))
-                throw new Exception("Invalid email or password");
+                return Result.Conflict("Invalid email or password");
 
             var accessToken = _tokenService.GenerateAccessToken(user);
             var refreshToken = _tokenService.GenerateRefreshToken();
@@ -61,7 +62,7 @@ namespace Application.CQRS.Commands.Login
                 tags: ["user"],
                 cancellationToken: cancellationToken);
 
-            return new TokenResponse(accessToken, refreshToken);
+            return Result.Success(new TokenResponse(accessToken, refreshToken));
         }
     }
 }

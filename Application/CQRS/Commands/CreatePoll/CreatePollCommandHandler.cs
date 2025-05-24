@@ -1,4 +1,5 @@
-﻿using Application.Interfaces.Repositories;
+﻿using Ardalis.Result;
+using Application.Interfaces.Repositories;
 using AutoMapper;
 using Domain.Entities;
 using MediatR;
@@ -9,9 +10,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+
 namespace Application.CQRS.Commands.CreatePoll
 {
-    public class CreatePollCommandHandler : IRequestHandler<CreatePollCommand, Guid>
+    public class CreatePollCommandHandler : IRequestHandler<CreatePollCommand, Result<Guid>>
     {
         private readonly IPollRepository _pollRepository;
         private readonly IUnitOfWork _unitOfÜork;
@@ -30,7 +32,7 @@ namespace Application.CQRS.Commands.CreatePoll
             _mapper = mapper;
         }
 
-        public async Task<Guid> Handle(CreatePollCommand request, CancellationToken cancellationToken)
+        public async Task<Result<Guid>> Handle(CreatePollCommand request, CancellationToken cancellationToken)
         {
             var candidates = request.Candidates.Select((c, index) => new Candidate
             {
@@ -65,7 +67,7 @@ namespace Application.CQRS.Commands.CreatePoll
                 tags: ["poll"],
                 cancellationToken: cancellationToken);
 
-            return poll.Id;
+            return Result.Created(poll.Id);
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Application.CQRS.Commands.Login;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Ardalis.Result;
 using Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.Caching.Hybrid;
@@ -12,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace Application.CQRS.Commands.RegisterUser
 {
-    public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, TokenResponse>
+    public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, Result<TokenResponse>>
     {
         private readonly IUserRepository _userRepository;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
@@ -37,10 +38,10 @@ namespace Application.CQRS.Commands.RegisterUser
             _passwordHasher = passwordHasher;
         }
 
-        public async Task<TokenResponse> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
+        public async Task<Result<TokenResponse>> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
         {
             if (await _userRepository.GetByEmailAsync(request.Email, cancellationToken) != null)
-                throw new Exception("Email already exists");
+                return Result.Conflict("Email already exists");
 
             var user = new User
             {
@@ -71,7 +72,7 @@ namespace Application.CQRS.Commands.RegisterUser
                 tags: ["user"],
                 cancellationToken: cancellationToken);
 
-            return new TokenResponse(accessToken, refreshToken);
+            return Result.Created(new TokenResponse(accessToken, refreshToken));
         }
     }
 }

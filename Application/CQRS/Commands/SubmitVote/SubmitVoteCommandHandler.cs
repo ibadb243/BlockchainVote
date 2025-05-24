@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Ardalis.Result;
 using Domain.Blockchain;
 using Domain.Entities;
 using MediatR;
@@ -9,10 +10,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Application.CQRS.Commands.SubmitVote
 {
-    public class SubmitVoteCommandHandler : IRequestHandler<SubmitVoteCommand, Guid>
+    public class SubmitVoteCommandHandler : IRequestHandler<SubmitVoteCommand, Result<Guid>>
     {
         private readonly IUserRepository _userRepository;
         private readonly IPollRepository _pollRepository;
@@ -37,7 +39,7 @@ namespace Application.CQRS.Commands.SubmitVote
             _cache = cache;
         }
 
-        public async Task<Guid> Handle(SubmitVoteCommand request, CancellationToken cancellationToken)
+        public async Task<Result<Guid>> Handle(SubmitVoteCommand request, CancellationToken cancellationToken)
         {
             var cachedUser = await _cache.GetOrCreateAsync($"user-{request.UserId}", async token =>
             {
@@ -46,7 +48,7 @@ namespace Application.CQRS.Commands.SubmitVote
             },
             tags: ["user"],
             cancellationToken: cancellationToken);
-            if (cachedUser == null) throw new Exception("User not found");
+            if (cachedUser == null) return Result.NotFound("User not found");
 
             var cachedPoll = await _cache.GetOrCreateAsync($"poll-{request.PollId}", async token =>
             {
@@ -55,20 +57,20 @@ namespace Application.CQRS.Commands.SubmitVote
             },
             tags: ["poll"],
             cancellationToken: cancellationToken);
-            if (cachedPoll == null) throw new Exception("Poll not found");
+            if (cachedPoll == null) return Result.NotFound("Poll not found");
 
             if (DateTime.UtcNow < cachedPoll.StartTime || DateTime.UtcNow > cachedPoll.EndTime)
-                throw new Exception("Poll is not active");
+                return Result.NotFound("Poll is not active");
 
             var candidateIds = cachedPoll.Candidates.Select(c => c.Id).ToHashSet();
             if (!request.CandidateIds.All(id => candidateIds.Contains(id)))
-                throw new Exception("Invalid candidate(s)");
+                return Result.Conflict("Invalid candidate(s)");
 
             if (!cachedPoll.IsSurvey && request.CandidateIds.Count > 1)
-                throw new Exception("Multiple selections not allowed in non-survey poll");
+                return Result.Conflict("Multiple selections not allowed in non-survey poll");
 
             if (cachedPoll.IsSurvey && cachedPoll.MaxSelections.HasValue && request.CandidateIds.Count > cachedPoll.MaxSelections.Value)
-                throw new Exception($"Cannot select more than {cachedPoll.MaxSelections.Value} candidates");
+                return Result.Conflict($"Cannot select more than {cachedPoll.MaxSelections.Value} candidates");
 
             var cachedVote = await _cache.GetOrCreateAsync($"vote-{request.PollId}-{request.UserId}", async token =>
             {
@@ -81,7 +83,7 @@ namespace Application.CQRS.Commands.SubmitVote
             if (cachedVote != null)
             {
                 if (!cachedPoll.AllowRevote)
-                    throw new Exception("User already voted and revoting is not allowed");
+                    return Result.Conflict("User already voted and revoting is not allowed");
 
                 cachedVote.Timestamp = DateTime.UtcNow;
                 cachedVote.Candidates.Clear();
@@ -145,7 +147,7 @@ namespace Application.CQRS.Commands.SubmitVote
                 tags: ["vote"],
                 cancellationToken: cancellationToken);
 
-            return vote.Id;
+            return Result.Created(vote.Id);
         }
     }
 }

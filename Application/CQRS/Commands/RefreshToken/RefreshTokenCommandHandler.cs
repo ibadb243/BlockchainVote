@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Ardalis.Result;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Application.CQRS.Commands.RefreshToken
 {
-    public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, TokenResponse>
+    public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, Result<TokenResponse>>
     {
         private readonly IUserRepository _userRepository;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
@@ -28,15 +29,15 @@ namespace Application.CQRS.Commands.RefreshToken
             _tokenService = tokenService;
         }
 
-        public async Task<TokenResponse> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
+        public async Task<Result<TokenResponse>> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
         {
             var token = await _refreshTokenRepository.GetByTokenAsync(request.RefreshToken, cancellationToken);
             if (token == null || token.ExpiresAt < DateTime.UtcNow)
-                throw new Exception("Invalid or expired refresh token");
+                return Result.Unavailable("Invalid or expired refresh token");
 
             var user = await _userRepository.GetByIdAsync(token.UserId, cancellationToken);
             if (user == null)
-                throw new Exception("User not found");
+                return Result.NotFound("User not found");
 
             var accessToken = _tokenService.GenerateAccessToken(user);
             var newRefreshToken = _tokenService.GenerateRefreshToken();
@@ -55,7 +56,8 @@ namespace Application.CQRS.Commands.RefreshToken
 
             await _refreshTokenRepository.AddAsync(newToken, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
-            return new TokenResponse(accessToken, newRefreshToken);
+
+            return Result.Success(new TokenResponse(accessToken, newRefreshToken));
         }
     }
 }
