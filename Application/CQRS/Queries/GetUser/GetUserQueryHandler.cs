@@ -1,4 +1,5 @@
 ﻿using Application.Interfaces.Repositories;
+using Ardalis.Result;
 using AutoMapper;
 using MediatR;
 using Microsoft.Extensions.Caching.Hybrid;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Application.CQRS.Queries.GetUser
 {
-    public class GetUserQueryHandler : IRequestHandler<GetUserQuery, UserDto?>
+    public class GetUserQueryHandler : IRequestHandler<GetUserQuery, Result<UserDto>>
     {
         private readonly IUserRepository _userRepository;
         private readonly HybridCache _cache;
@@ -26,7 +27,7 @@ namespace Application.CQRS.Queries.GetUser
             _mapper = mapper;
         }
 
-        public async Task<UserDto?> Handle(GetUserQuery request, CancellationToken cancellationToken)
+        public async Task<Result<UserDto>> Handle(GetUserQuery request, CancellationToken cancellationToken)
         {
             var cachedUser = await _cache.GetOrCreateAsync($"user-{request.Id}", async token =>
             {
@@ -35,8 +36,10 @@ namespace Application.CQRS.Queries.GetUser
             },
             tags: ["user"],
             cancellationToken: cancellationToken);
-            
-            return cachedUser == null ? null : _mapper.Map<UserDto>(cachedUser);
+
+            if (cachedUser == null) return Result.NotFound("User not found");
+
+            return Result.Success(_mapper.Map<UserDto>(cachedUser));
         }
     }
 }

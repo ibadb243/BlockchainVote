@@ -1,4 +1,5 @@
 ﻿using Application.Interfaces.Repositories;
+using Ardalis.Result;
 using AutoMapper;
 using MediatR;
 using Microsoft.Extensions.Caching.Hybrid;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Application.CQRS.Queries.GetPoll
 {
-    public class GetPollQueryHandler : IRequestHandler<GetPollQuery, PollDto?>
+    public class GetPollQueryHandler : IRequestHandler<GetPollQuery, Result<PollDto>>
     {
         private readonly IPollRepository _pollRepository;
         private readonly HybridCache _cache;
@@ -26,7 +27,7 @@ namespace Application.CQRS.Queries.GetPoll
             _mapper = mapper;
         }
 
-        public async Task<PollDto?> Handle(GetPollQuery request, CancellationToken cancellationToken)
+        public async Task<Result<PollDto>> Handle(GetPollQuery request, CancellationToken cancellationToken)
         {
             var cachedPoll = await _cache.GetOrCreateAsync($"poll-{request.Id}", async token =>
             {
@@ -36,7 +37,9 @@ namespace Application.CQRS.Queries.GetPoll
             tags: ["poll"],
             cancellationToken: cancellationToken);
 
-            return cachedPoll == null ? null : _mapper.Map<PollDto>(cachedPoll);
+            if (cachedPoll == null) return Result.NotFound();
+
+            return Result.Success(_mapper.Map<PollDto>(cachedPoll));
         }
     }
 }

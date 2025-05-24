@@ -1,4 +1,5 @@
 ﻿using Application.Interfaces.Repositories;
+using Ardalis.Result;
 using AutoMapper;
 using MediatR;
 using Microsoft.Extensions.Caching.Hybrid;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Application.CQRS.Queries.GetBlock
 {
-    public class GetBlockQueryHandler : IRequestHandler<GetBlockQuery, BlockDto?>
+    public class GetBlockQueryHandler : IRequestHandler<GetBlockQuery, Result<BlockDto>>
     {
         private readonly IBlockRepository _blockRepository;
         private readonly HybridCache _cache;
@@ -26,7 +27,7 @@ namespace Application.CQRS.Queries.GetBlock
             _mapper = mapper;
         }
 
-        public async Task<BlockDto?> Handle(GetBlockQuery request, CancellationToken cancellationToken)
+        public async Task<Result<BlockDto>> Handle(GetBlockQuery request, CancellationToken cancellationToken)
         {
             var cachedBlock = await _cache.GetOrCreateAsync($"block-{request.Hash}", async token =>
             {
@@ -35,8 +36,10 @@ namespace Application.CQRS.Queries.GetBlock
             },
             tags: ["block"],
             cancellationToken: cancellationToken);
-            
-            return cachedBlock == null ? null : _mapper.Map<BlockDto>(cachedBlock);
+
+            if (cachedBlock == null) return Result.NotFound();
+
+            return Result.Success(_mapper.Map<BlockDto>(cachedBlock));
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Ardalis.Result;
 using Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.Caching.Hybrid;
@@ -11,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Application.CQRS.Queries.GetPollResults
 {
-    public class GetPollResultsQueryHandler : IRequestHandler<GetPollResultsQuery, Dictionary<int, int>>
+    public class GetPollResultsQueryHandler : IRequestHandler<GetPollResultsQuery, Result<Dictionary<int, int>>>
     {
         private readonly IVoteRepository _voteRepository;
         private readonly IPollRepository _pollRepository;
@@ -27,7 +28,7 @@ namespace Application.CQRS.Queries.GetPollResults
             _cache = cache;
         }
 
-        public async Task<Dictionary<int, int>> Handle(GetPollResultsQuery request, CancellationToken cancellationToken)
+        public async Task<Result<Dictionary<int, int>>> Handle(GetPollResultsQuery request, CancellationToken cancellationToken)
         {
             var cachedPoll = await _cache.GetOrCreateAsync($"poll-{request.PollId}", async token =>
             {
@@ -36,7 +37,7 @@ namespace Application.CQRS.Queries.GetPollResults
             },
             tags: ["poll"],
             cancellationToken: cancellationToken);
-            if (cachedPoll == null) throw new Exception("Poll not found");
+            if (cachedPoll == null) return Result.NotFound("Poll not found");
 
             var cachedResults = await _cache.GetOrCreateAsync($"poll-{request.PollId}-result", async token =>
             {
@@ -58,7 +59,7 @@ namespace Application.CQRS.Queries.GetPollResults
             tags: ["results"],
             cancellationToken: cancellationToken);
 
-            return cachedResults;
+            return Result.Success(cachedResults);
         }
     }
 }

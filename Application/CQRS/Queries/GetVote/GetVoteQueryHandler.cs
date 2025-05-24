@@ -1,4 +1,5 @@
 ﻿using Application.Interfaces.Repositories;
+using Ardalis.Result;
 using AutoMapper;
 using MediatR;
 using Microsoft.Extensions.Caching.Hybrid;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Application.CQRS.Queries.GetVote
 {
-    public class GetVoteQueryHandler : IRequestHandler<GetVoteQuery, VoteVerificationDto?>
+    public class GetVoteQueryHandler : IRequestHandler<GetVoteQuery, Result<VoteVerificationDto>>
     {
         private readonly IVoteRepository _voteRepository;
         private readonly HybridCache _cache;
@@ -26,7 +27,7 @@ namespace Application.CQRS.Queries.GetVote
             _mapper = mapper;
         }
 
-        public async Task<VoteVerificationDto?> Handle(GetVoteQuery request, CancellationToken cancellationToken)
+        public async Task<Result<VoteVerificationDto>> Handle(GetVoteQuery request, CancellationToken cancellationToken)
         {
             var cachedVote = await _cache.GetOrCreateAsync($"vote-{request.Id}", async token =>
             {
@@ -35,8 +36,10 @@ namespace Application.CQRS.Queries.GetVote
             },
             tags: ["vote"],
             cancellationToken: cancellationToken);
-            
-            return cachedVote == null ? null : _mapper.Map<VoteVerificationDto>(cachedVote);
+
+            if (cachedVote == null) return Result.NotFound("User not found");
+
+            return Result.Success(_mapper.Map<VoteVerificationDto>(cachedVote));
         }
     }
 }

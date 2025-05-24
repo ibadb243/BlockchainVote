@@ -1,4 +1,5 @@
 ﻿using Application.Interfaces.Repositories;
+using Ardalis.Result;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using MediatR;
@@ -11,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Application.CQRS.Queries.GetBlockList
 {
-    public class GetBlockListQueryHandler : IRequestHandler<GetBlockListQuery, List<BlockDto>>
+    public class GetBlockListQueryHandler : IRequestHandler<GetBlockListQuery, Result<List<BlockDto>>>
     {
         private readonly IBlockRepository _blockRepository;
         private readonly IMapper _mapper;
@@ -24,7 +25,7 @@ namespace Application.CQRS.Queries.GetBlockList
             _mapper = mapper;
         }
 
-        public async Task<List<BlockDto>> Handle(GetBlockListQuery request, CancellationToken cancellationToken)
+        public async Task<Result<List<BlockDto>>> Handle(GetBlockListQuery request, CancellationToken cancellationToken)
         {
             var blocks = await _blockRepository
                 .GetAllQuery()
@@ -33,7 +34,7 @@ namespace Application.CQRS.Queries.GetBlockList
                 .ProjectTo<BlockDto>(_mapper.ConfigurationProvider)
                 .ToListAsync(cancellationToken);
 
-            return blocks;
+            return Result.Success(blocks);
         }
     }
 }
