@@ -25,7 +25,7 @@ namespace WebAPI.Controllers
         public async Task<IActionResult> CreatePoll([FromBody] CreatePollRequest request)
         {
             var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new Exception("Unauthorized"));
-            var pollId = await _mediator.Send(new CreatePollCommand(
+            var result = await _mediator.Send(new CreatePollCommand(
                 request.Title,
                 request.Candidates.Select(dto => new Application.CQRS.Commands.CreatePoll.CreateCandidateDto() { Name = dto.Name }).ToList(),
                 request.StartTime ?? DateTime.UtcNow.AddSeconds(1),
@@ -35,21 +35,21 @@ namespace WebAPI.Controllers
                 request.MaxSelections,
                 request.IsAnonymous
             ));
-            return Ok(new { PollId = pollId });
+            return Ok(result);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetPollDetails(Guid id)
         {
-            var pollDetails = await _mediator.Send(new GetPollQuery(id));
-            return Ok(pollDetails);
+            var result = await _mediator.Send(new GetPollQuery(id));
+            return Ok(result);
         }
 
         [HttpGet("{id}/results")]
         public async Task<IActionResult> GetPollResults(Guid id)
         {
-            var pollResults = await _mediator.Send(new GetPollResultsQuery(id));
-            return Ok(pollResults);
+            var result = await _mediator.Send(new GetPollResultsQuery(id));
+            return Ok(result);
         }
     }
 }

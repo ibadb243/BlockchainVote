@@ -22,22 +22,22 @@ namespace WebAPI.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
-            var tokenResponse = await _mediator.Send(new RegisterUserCommand(request.Email, request.Password));
-            return Ok(tokenResponse);
+            var result = await _mediator.Send(new RegisterUserCommand(request.Email, request.Password));
+            return Ok(result);
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            var tokenResponse = await _mediator.Send(new LoginCommand(request.Email, request.Password));
-            return Ok(tokenResponse);
+            var result = await _mediator.Send(new LoginCommand(request.Email, request.Password));
+            return Ok(result);
         }
 
         [HttpPost("refresh")]
         public async Task<IActionResult> Refresh([FromBody] string refreshToken)
         {
-            var tokenResponse = await _mediator.Send(new RefreshTokenCommand(refreshToken));
-            return Ok(tokenResponse);
+            var result = await _mediator.Send(new RefreshTokenCommand(refreshToken));
+            return Ok(result);
         }
     }
 }

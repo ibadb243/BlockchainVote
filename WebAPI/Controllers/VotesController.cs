@@ -24,20 +24,20 @@ namespace WebAPI.Controllers
         public async Task<IActionResult> SubmitVote([FromBody] SubmitVoteRequest request)
         {
             var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new Exception("Unauthorized"));
-            var voteId = await _mediator.Send(new SubmitVoteCommand(
+            var result = await _mediator.Send(new SubmitVoteCommand(
                 userId,
                 request.PollId,
                 request.CandidateIds
             ));
-            return Ok(new { VoteId = voteId });
+            return Ok(result);
         }
 
         [HttpGet("{voteId}")]
         public async Task<IActionResult> GetUserVote(Guid voteId)
         {
             var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new Exception("Unauthorized"));
-            var userVote = await _mediator.Send(new GetVoteQuery(voteId));
-            return Ok(userVote);
+            var result = await _mediator.Send(new GetVoteQuery(voteId));
+            return Ok(result);
         }
     }
 }
