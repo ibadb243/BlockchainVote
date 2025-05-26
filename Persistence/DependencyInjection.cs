@@ -25,6 +25,8 @@ namespace Persistence
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
             services.AddScoped<IBlockRepository, BlockRepository>();
 
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+
             services.AddStackExchangeRedisCache(options =>
             {
                 options.Configuration = configuration.GetConnectionString("Redis");
