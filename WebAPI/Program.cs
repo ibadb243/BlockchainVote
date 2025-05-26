@@ -31,11 +31,11 @@ builder.Services.AddAutoMapper(config =>
     config.AddProfile(new AssemblyMappingProfile(typeof(IMapWith<>).Assembly));
 });
 
-builder.Services.AddStackExchangeRedisCache(options =>
-{
-    options.Configuration = configuration.GetConnectionString("Redis");
-    options.InstanceName = "votechain_";
-});
+//builder.Services.AddStackExchangeRedisCache(options =>
+//{
+//    options.Configuration = configuration.GetConnectionString("Redis");
+//    options.InstanceName = "votechain_";
+//});
 
 builder.Services.AddApplication();
 builder.Services.AddPersistence(configuration);
