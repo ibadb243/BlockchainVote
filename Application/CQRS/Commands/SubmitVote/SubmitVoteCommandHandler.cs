@@ -92,8 +92,6 @@ namespace Application.CQRS.Commands.SubmitVote
                     VoteId = cachedVote.Id,
                     PollId = cachedVote.PollId,
                     CandidateId = id,
-                    Vote = cachedVote,
-                    Candidate = cachedPoll.Candidates.First(c => c.Id == id)
                 }));
 
                 await _voteRepository.UpdateAsync(cachedVote, cancellationToken);
@@ -114,14 +112,11 @@ namespace Application.CQRS.Commands.SubmitVote
                 UserId = request.UserId,
                 PollId = request.PollId,
                 Timestamp = DateTime.UtcNow,
-                User = cachedUser,
-                Poll = cachedPoll,
                 Candidates = request.CandidateIds.Select(id => new VoteCandidate
                 {
                     VoteId = Guid.Empty,
                     PollId = Guid.Empty,
                     CandidateId = id,
-                    Candidate = cachedPoll.Candidates.First(c => c.Id == id)
                 }).ToList()
             };
 
@@ -129,7 +124,6 @@ namespace Application.CQRS.Commands.SubmitVote
             {
                 voteCandidate.PollId = vote.PollId;
                 voteCandidate.VoteId = vote.Id;
-                voteCandidate.Vote = vote;
             }
 
             await _voteRepository.AddAsync(vote, cancellationToken);
