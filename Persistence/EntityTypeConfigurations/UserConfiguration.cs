@@ -28,11 +28,6 @@ namespace Persistence.EntityTypeConfigurations
             builder
                 .Property(x => x.PasswordHash)
                 .IsRequired();
-
-            builder
-                .HasMany(u => u.Votes)
-                .WithOne(v => v.User)
-                .HasForeignKey(v => v.UserId);
         }
     }
 }
