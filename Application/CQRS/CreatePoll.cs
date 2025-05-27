@@ -57,7 +57,7 @@ namespace Application.CQRS.CreatePoll
     public class CreatePollRequestHandler : IRequestHandler<CreatePollRequest, Result<_dto>>
     {
         private readonly IPollRepository _pollRepository;
-        private readonly IUnitOfWork _unitOfÜork;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly HybridCache _cache;
         private readonly IMapper _mapper;
 
@@ -68,7 +68,7 @@ namespace Application.CQRS.CreatePoll
             IMapper mapper)
         {
             _pollRepository = pollRepository;
-            _unitOfÜork = unitOfWork;
+            _unitOfWork = unitOfWork;
             _cache = cache;
             _mapper = mapper;
         }
@@ -102,7 +102,7 @@ namespace Application.CQRS.CreatePoll
             }
 
             await _pollRepository.AddAsync(poll, cancellationToken);
-            await _unitOfÜork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             await _cache.SetAsync<Poll>($"poll-{poll.Id}", poll,
                 tags: ["poll"],
