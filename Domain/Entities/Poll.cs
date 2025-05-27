@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Domain.Entities
@@ -17,6 +18,8 @@ namespace Domain.Entities
         public int? MaxSelections { get; set; }
         public bool IsAnonymous { get; set; }
         public List<Candidate> Candidates { get; set; } = [];
+
+        [JsonIgnore]
         public List<Vote> Votes { get; set; } = [];
     }
 }
