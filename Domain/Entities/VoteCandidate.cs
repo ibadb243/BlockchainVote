@@ -9,8 +9,8 @@ namespace Domain.Entities
 {
     public class VoteCandidate
     {
-        public Guid VoteId { get; set; }
         public Guid PollId { get; set; }
+        public Guid UserId { get; set; }
         public int CandidateId { get; set; }
 
         [JsonIgnore]
