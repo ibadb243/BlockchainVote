@@ -29,9 +29,9 @@ namespace Application.CQRS.Queries.GetVote
 
         public async Task<Result<VoteVerificationDto>> Handle(GetVoteQuery request, CancellationToken cancellationToken)
         {
-            var cachedVote = await _cache.GetOrCreateAsync($"vote-{request.Id}", async token =>
+            var cachedVote = await _cache.GetOrCreateAsync($"vote-{request.pollId}-{request.userId}", async token =>
             {
-                var vote = await _voteRepository.GetByIdAsync(request.Id, token);
+                var vote = await _voteRepository.GetByUserAndPollAsync(request.userId, request.pollId, token);
                 return vote;
             },
             tags: ["vote"],

@@ -8,6 +8,6 @@ using System.Threading.Tasks;
 
 namespace Application.CQRS.Queries.GetVote
 {
-    public record GetVoteQuery(Guid Id) 
+    public record GetVoteQuery(Guid pollId, Guid userId) 
         : IRequest<Result<VoteVerificationDto>>;
 }

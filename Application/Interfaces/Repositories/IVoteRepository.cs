@@ -9,7 +9,6 @@ namespace Application.Interfaces.Repositories
 {
     public interface IVoteRepository
     {
-        Task<Vote?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
         Task<Vote?> GetByUserAndPollAsync(Guid userId, Guid pollId, CancellationToken cancellationToken = default);
         Task AddAsync(Vote vote, CancellationToken cancellationToken = default);
         Task UpdateAsync(Vote vote, CancellationToken cancellationToken = default);

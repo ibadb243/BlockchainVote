@@ -12,5 +12,5 @@ namespace Application.CQRS.Commands.SubmitVote
         Guid UserId, 
         Guid PollId, 
         List<int> CandidateIds) 
-        : IRequest<Result<Guid>>;
+        : IRequest<Result<DateTime>>;
 }
