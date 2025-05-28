@@ -1,6 +1,7 @@
 ﻿using Application.CQRS.Commands.CreatePoll;
 using Application.CQRS.Queries.GetPoll;
 using Application.CQRS.Queries.GetPollResults;
+using Application.CQRS.Queries.GetVote;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -49,6 +50,16 @@ namespace WebAPI.Controllers
         public async Task<IActionResult> GetPollResults(Guid id)
         {
             var result = await _mediator.Send(new GetPollResultsQuery(id));
+            return Ok(result);
+        }
+
+        [HttpGet("{id}/vote")]
+        public async Task<IActionResult> GetVote(Guid id)
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new Exception("Unauthorized"));
+            var query = new GetVoteQuery(id, userId);
+
+            var result = await _mediator.Send(query);
             return Ok(result);
         }
     }
