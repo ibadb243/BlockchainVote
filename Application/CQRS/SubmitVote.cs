@@ -73,7 +73,7 @@ namespace Application.CQRS.SubmitVote
 
             var cachedPoll = await _cache.GetOrCreateAsync($"poll-{request.poll}", async token =>
             {
-                var poll = await _pollRepository.GetByIdAsync(request.user!.Value, token);
+                var poll = await _pollRepository.GetByIdAsync(request.poll!.Value, token);
                 return poll;
             },
             tags: ["poll"],
