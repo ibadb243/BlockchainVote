@@ -76,7 +76,7 @@ namespace Application.CQRS.RegisterUser
             var accessToken = _tokenService.GenerateAccessToken(user);
             var refreshToken = _tokenService.GenerateRefreshToken();
 
-            var token = new RefreshToken
+            var token = new Domain.Entities.RefreshToken
             {
                 Id = Guid.NewGuid(),
                 UserId = user.Id,

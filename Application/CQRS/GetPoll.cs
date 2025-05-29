@@ -1,5 +1,4 @@
-﻿using Application.CQRS.Queries.GetPoll;
-using Application.Interfaces.Repositories;
+﻿using Application.Interfaces.Repositories;
 using Ardalis.Result;
 using AutoMapper;
 using FluentValidation;
