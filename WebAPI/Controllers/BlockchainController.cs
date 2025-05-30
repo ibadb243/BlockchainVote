@@ -1,5 +1,5 @@
-﻿using Application.CQRS.Queries.GetBlock;
-using Application.CQRS.Queries.GetBlockList;
+﻿using Application.CQRS.GetBlock;
+using Application.CQRS.GetBlockList;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,18 +16,23 @@ namespace WebAPI.Controllers
             _mediator = mediator;
         }
 
-        [HttpGet("{hash}")]
-        public async Task<IActionResult> GetBlock(string hash)
+        [HttpGet()]
+        public async Task<IActionResult> GetBlock(
+            CancellationToken cancellationToken,
+            [FromQuery] GetBlockRequest request)
         {
-            var query = new GetBlockQuery { Hash = hash };
-            var result = await _mediator.Send(query);
+            var result = await _mediator.Send(request, cancellationToken);
+
             return Ok(result);
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetBlocks([FromQuery] GetBlockListQuery query)
+        public async Task<IActionResult> GetBlockList(
+            CancellationToken cancellationToken,
+            [FromQuery] GetBlockListRequest request)
         {
-            var result = await _mediator.Send(query);
+            var result = await _mediator.Send(request, cancellationToken);
+
             return Ok(result);
         }
     }

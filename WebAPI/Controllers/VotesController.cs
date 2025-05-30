@@ -1,10 +1,9 @@
-﻿using Application.CQRS.Commands.SubmitVote;
-using Application.CQRS.Queries.GetVote;
+﻿using Application.CQRS.GetVote;
+using Application.CQRS.SubmitVote;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using WebAPI.DTOs;
 
 namespace WebAPI.Controllers
 {
@@ -21,22 +20,27 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> SubmitVote([FromBody] SubmitVoteRequest request)
+        public async Task<IActionResult> SubmitVote(
+            CancellationToken cancellationToken,
+            [FromBody] SubmitVoteRequest request)
         {
             var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new Exception("Unauthorized"));
-            var result = await _mediator.Send(new SubmitVoteCommand(
-                userId,
-                request.PollId,
-                request.CandidateIds
-            ));
+            request.user = userId;
+
+            var result = await _mediator.Send(request, cancellationToken);
+
             return Ok(result);
         }
 
-        [HttpGet("{voteId}")]
-        public async Task<IActionResult> GetUserVote(Guid voteId)
+        [HttpGet("{vote_id:guid}")]
+        public async Task<IActionResult> GetUserVote(
+            CancellationToken cancellationToken,
+            [FromRoute] Guid vote_id)
         {
-            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new Exception("Unauthorized"));
-            var result = await _mediator.Send(new GetVoteQuery(voteId));
+            var request = new GetVoteRequest { vote_id = vote_id };
+
+            var result = await _mediator.Send(request);
+
             return Ok(result);
         }
     }

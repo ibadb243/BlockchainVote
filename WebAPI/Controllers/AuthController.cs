@@ -1,6 +1,6 @@
-﻿using Application.CQRS.Commands.Login;
-using Application.CQRS.Commands.RefreshToken;
-using Application.CQRS.Commands.RegisterUser;
+﻿using Application.CQRS.LoginUser;
+using Application.CQRS.RefreshToken;
+using Application.CQRS.RegisterUser;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -20,23 +20,32 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+        public async Task<IActionResult> Register(
+            CancellationToken cancellationToken,
+            [FromBody] RegisterUserRequest request)
         {
-            var result = await _mediator.Send(new RegisterUserCommand(request.Email, request.Password));
+            var result = await _mediator.Send(request, cancellationToken);
+
             return Ok(result);
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        public async Task<IActionResult> Login(
+            CancellationToken cancellationToken,
+            [FromBody] LoginUserRequest request)
         {
-            var result = await _mediator.Send(new LoginCommand(request.Email, request.Password));
+            var result = await _mediator.Send(request, cancellationToken);
+
             return Ok(result);
         }
 
         [HttpPost("refresh")]
-        public async Task<IActionResult> Refresh([FromBody] string refreshToken)
+        public async Task<IActionResult> Refresh(
+            CancellationToken cancellationToken,
+            [FromBody] RefreshTokenRequest request)
         {
-            var result = await _mediator.Send(new RefreshTokenCommand(refreshToken));
+            var result = await _mediator.Send(request, cancellationToken);
+
             return Ok(result);
         }
     }

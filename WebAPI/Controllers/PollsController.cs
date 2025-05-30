@@ -1,11 +1,10 @@
-﻿using Application.CQRS.Commands.CreatePoll;
-using Application.CQRS.Queries.GetPoll;
-using Application.CQRS.Queries.GetPollResults;
+﻿using Application.CQRS.CreatePoll;
+using Application.CQRS.GetPoll;
+using Application.CQRS.GetPollResult;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using WebAPI.DTOs;
 
 namespace WebAPI.Controllers
 {
@@ -22,33 +21,36 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreatePoll([FromBody] CreatePollRequest request)
+        public async Task<IActionResult> CreatePoll(
+            CancellationToken cancellationToken,
+            [FromBody] CreatePollRequest request)
         {
-            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new Exception("Unauthorized"));
-            var result = await _mediator.Send(new CreatePollCommand(
-                request.Title,
-                request.Candidates.Select(dto => new Application.CQRS.Commands.CreatePoll.CreateCandidateDto() { Name = dto.Name }).ToList(),
-                request.StartTime ?? DateTime.UtcNow.AddSeconds(1),
-                request.EndTime,
-                request.IsSurvey,
-                request.AllowRevote,
-                request.MaxSelections,
-                request.IsAnonymous
-            ));
+            var result = await _mediator.Send(request, cancellationToken);
+
             return Ok(result);
         }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetPollDetails(Guid id)
+        [HttpGet("{poll_id:guid}")]
+        public async Task<IActionResult> GetPollDetails(
+            CancellationToken cancellationToken,
+            [FromRoute] Guid poll_id)
         {
-            var result = await _mediator.Send(new GetPollQuery(id));
+            var request = new GetPollRequest { id = poll_id };
+
+            var result = await _mediator.Send(request, cancellationToken);
+
             return Ok(result);
         }
 
-        [HttpGet("{id}/results")]
-        public async Task<IActionResult> GetPollResults(Guid id)
+        [HttpGet("{poll_id:guid}/results")]
+        public async Task<IActionResult> GetPollResults(
+            CancellationToken cancellationToken,
+            [FromRoute] Guid poll_id)
         {
-            var result = await _mediator.Send(new GetPollResultsQuery(id));
+            var request = new GetPollResultRequest { id = poll_id };
+
+            var result = await _mediator.Send(request, cancellationToken);
+
             return Ok(result);
         }
     }
