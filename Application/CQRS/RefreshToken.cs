@@ -51,7 +51,7 @@ namespace Application.CQRS.RefreshToken
 
         public async Task<Result<_dto>> Handle(RefreshTokenRequest request, CancellationToken cancellationToken)
         {
-            var token = await _refreshTokenRepository.GetByTokenAsync(request.RefreshToken, cancellationToken);
+            var token = await _refreshTokenRepository.GetByTokenAsync(request.refresh_token, cancellationToken);
             if (token == null || token.ExpiresAt < DateTime.UtcNow)
                 return Result.Unavailable("Invalid or expired refresh token");
 

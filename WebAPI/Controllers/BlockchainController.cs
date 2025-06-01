@@ -16,11 +16,16 @@ namespace WebAPI.Controllers
             _mediator = mediator;
         }
 
-        [HttpGet()]
+        [HttpGet("{hash}")]
         public async Task<IActionResult> GetBlock(
             CancellationToken cancellationToken,
-            [FromQuery] GetBlockRequest request)
+            [FromQuery] string hash)
         {
+            var request = new GetBlockRequest
+            {
+                hash = hash
+            };
+
             var result = await _mediator.Send(request, cancellationToken);
 
             return Ok(result);
