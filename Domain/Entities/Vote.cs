@@ -9,7 +9,6 @@ namespace Domain.Entities
 {
     public class Vote
     {
-        public Guid Id { get; set; }
         public Guid PollId { get; set; }
         public Guid UserId { get; set; }
         public DateTime Timestamp { get; set; }

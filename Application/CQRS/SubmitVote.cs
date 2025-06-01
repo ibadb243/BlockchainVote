@@ -15,7 +15,8 @@ namespace Application.CQRS.SubmitVote
 {
     public class _dto
     {
-        public Guid vote { get; set; }
+        public List<int> selection { get; set; }
+        public DateTime timestamp { get; set; }
     }
 
     public class SubmitVoteRequest : IRequest<Result<_dto>>
@@ -110,7 +111,6 @@ namespace Application.CQRS.SubmitVote
                 cachedVote.Candidates.Clear();
                 cachedVote.Candidates.AddRange(request.selection.Select(id => new VoteCandidate
                 {
-                    VoteId = cachedVote.Id,
                     PollId = cachedVote.PollId,
                     CandidateId = id,
                 }));
@@ -118,28 +118,27 @@ namespace Application.CQRS.SubmitVote
                 await _voteRepository.UpdateAsync(cachedVote, cancellationToken);
                 await _pendingVoteRepository.AddAsync(new PendingVote()
                 {
-                    VoteId = cachedVote.Id,
                     UserId = cachedVote.UserId,
                     PollId = cachedVote.PollId,
                     Timestamp = cachedVote.Timestamp,
                     CandidateIds = request.selection,
                 }, cancellationToken);
+
                 return Result.Success(new _dto
                 {
-                    vote = cachedVote.Id
+                    selection = request.selection,
                 });
             }
 
             var vote = new Vote
             {
-                Id = Guid.NewGuid(),
                 UserId = request.user!.Value,
                 PollId = request.poll!.Value,
                 Timestamp = DateTime.UtcNow,
                 Candidates = request.selection.Select(id => new VoteCandidate
                 {
-                    VoteId = Guid.Empty,
                     PollId = Guid.Empty,
+                    UserId = Guid.Empty,
                     CandidateId = id,
                 }).ToList()
             };
@@ -147,13 +146,12 @@ namespace Application.CQRS.SubmitVote
             foreach (var voteCandidate in vote.Candidates)
             {
                 voteCandidate.PollId = vote.PollId;
-                voteCandidate.VoteId = vote.Id;
+                voteCandidate.UserId = vote.UserId;
             }
 
             await _voteRepository.AddAsync(vote, cancellationToken);
-            await _pendingVoteRepository.AddAsync(new PendingVote()
+            await _pendingVoteRepository.AddAsync(new PendingVote() 
             {
-                VoteId = vote.Id,
                 UserId = vote.UserId,
                 PollId = vote.PollId,
                 Timestamp = vote.Timestamp,
@@ -167,7 +165,8 @@ namespace Application.CQRS.SubmitVote
 
             return Result.Created(new _dto
             {
-                vote = vote.Id
+                selection = request.selection,
+                timestamp = vote.Timestamp,
             });
         }
     }

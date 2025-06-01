@@ -9,7 +9,6 @@ namespace Domain.Blockchain
     public class BlockTransaction
     {
         public Guid PollId { get; set; }
-        public Guid VoteId { get; set; }
         public string UserIdHash { get; set; }
         public List<int> CandidateIds { get; set; } = [];
         public DateTime Timestamp { get; set; }

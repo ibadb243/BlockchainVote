@@ -17,7 +17,6 @@ namespace Services
             var transaction = new BlockTransaction
             {
                 PollId = pendingVote.PollId,
-                VoteId = pendingVote.VoteId,
                 UserIdHash = ComputeSha256Hash($"{pendingVote.PollId}:{pendingVote.UserId}"),
                 CandidateIds = pendingVote.CandidateIds,
                 Timestamp = pendingVote.Timestamp
@@ -38,7 +37,6 @@ namespace Services
             var data = new
             {
                 transaction.PollId,
-                transaction.VoteId,
                 transaction.UserIdHash,
                 transaction.CandidateIds,
                 transaction.Timestamp

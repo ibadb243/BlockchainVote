@@ -15,16 +15,16 @@ namespace Persistence.EntityTypeConfigurations
         public void Configure(EntityTypeBuilder<VoteCandidate> builder)
         {
             builder
-                .HasKey(vc => new { vc.VoteId, vc.CandidateId });
+                .HasKey(vc => new { vc.PollId, vc.UserId, vc.CandidateId });
 
             builder
-               .HasIndex(vc => new { vc.VoteId, vc.CandidateId })
+               .HasIndex(vc => new { vc.PollId, vc.UserId, vc.CandidateId })
                .IsUnique();
 
             builder
                 .HasOne(vc => vc.Vote)
                 .WithMany(v => v.Candidates)
-                .HasForeignKey(vc => vc.VoteId);
+                .HasForeignKey(vc => new { vc.PollId, vc.UserId });
 
             builder
                 .HasOne(vc => vc.Candidate)

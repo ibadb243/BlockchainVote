@@ -1,5 +1,4 @@
-﻿using Application.CQRS.GetVote;
-using Application.CQRS.SubmitVote;
+﻿using Application.CQRS.SubmitVote;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -28,18 +27,6 @@ namespace WebAPI.Controllers
             request.user = userId;
 
             var result = await _mediator.Send(request, cancellationToken);
-
-            return Ok(result);
-        }
-
-        [HttpGet("{vote_id:guid}")]
-        public async Task<IActionResult> GetUserVote(
-            CancellationToken cancellationToken,
-            [FromRoute] Guid vote_id)
-        {
-            var request = new GetVoteRequest { vote_id = vote_id };
-
-            var result = await _mediator.Send(request);
 
             return Ok(result);
         }

@@ -1,6 +1,7 @@
 ﻿using Application.CQRS.CreatePoll;
 using Application.CQRS.GetPoll;
 using Application.CQRS.GetPollResult;
+using Application.CQRS.GetVote;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -51,6 +52,23 @@ namespace WebAPI.Controllers
 
             var result = await _mediator.Send(request, cancellationToken);
 
+            return Ok(result);
+        }
+
+        [HttpGet("{poll_id:guid}/vote")]
+        public async Task<IActionResult> GetVote(
+            CancellationToken cancellationToken,
+            [FromRoute] Guid poll_id)
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new Exception("Unauthorized"));
+
+            var request = new GetVoteRequest
+            {
+                poll_id = poll_id,
+                user_id = userId
+            };
+
+            var result = await _mediator.Send(request, cancellationToken);
             return Ok(result);
         }
     }

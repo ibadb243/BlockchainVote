@@ -16,12 +16,6 @@ namespace Persistence.Repositories
 
         public VoteRepository(VoteChainDbContext context) => _context = context;
 
-        public async Task<Vote?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-            => await _context.Votes
-                .Include(v => v.Candidates)
-                .Include(v => v.Poll)
-                .FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
-
         public async Task<Vote?> GetByUserAndPollAsync(Guid userId, Guid pollId, CancellationToken cancellationToken = default)
             => await _context.Votes
                 .Include(v => v.Candidates)

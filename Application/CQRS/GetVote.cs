@@ -23,14 +23,16 @@ namespace Application.CQRS.GetVote
 
     public class GetVoteRequest : IRequest<Result<_dto>>
     {
-        public Guid? vote_id { get; set; }
+        public Guid? poll_id { get; set; }
+        public Guid? user_id { get; set; }
     }
 
     public class GetVoteRequestValidator : AbstractValidator<GetVoteRequest>
     {
         public GetVoteRequestValidator()
         {
-            RuleFor(x => x.vote_id).NotEmpty();
+            RuleFor(x => x.poll_id).NotEmpty();
+            RuleFor(x => x.user_id).NotEmpty();
         }
     }
 
@@ -55,9 +57,9 @@ namespace Application.CQRS.GetVote
 
         public async Task<Result<_dto>> Handle(GetVoteRequest request, CancellationToken cancellationToken)
         {
-            var cachedVote = await _cache.GetOrCreateAsync($"vote-{request.vote_id}", async token =>
+            var cachedVote = await _cache.GetOrCreateAsync($"vote-{request.poll_id}-{request.user_id}", async token =>
             {
-                var vote = await _voteRepository.GetByIdAsync(request.vote_id!.Value, token);
+                var vote = await _voteRepository.GetByUserAndPollAsync(request.user_id!.Value, request.poll_id!.Value, token);
                 return vote;
             },
             tags: ["vote"],
