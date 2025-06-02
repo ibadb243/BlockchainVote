@@ -96,7 +96,7 @@ namespace Application.CQRS.SubmitVote
 
             var cachedVote = await _cache.GetOrCreateAsync($"vote-{request.poll}-{request.user}", async token =>
             {
-                var existingVote = await _voteRepository.GetByUserAndPollAsync(request.user!.Value, request.user!.Value, cancellationToken);
+                var existingVote = await _voteRepository.GetByUserAndPollAsync(request.user!.Value, request.poll!.Value, cancellationToken);
                 return existingVote;
             },
             tags: ["vote"],
