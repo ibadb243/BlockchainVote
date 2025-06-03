@@ -116,6 +116,8 @@ namespace Application.CQRS.SubmitVote
                         CandidateIds = request.selection,
                     }, cancellationToken);
 
+                    await _cache.RemoveAsync($"poll-{request.poll}-result", cancellationToken);
+
                     await _unitOfWork.CommitTransactionAsync(cancellationToken);
                     return Result.Success(new _dto
                     {
@@ -155,6 +157,7 @@ namespace Application.CQRS.SubmitVote
                 await _cache.SetAsync<Vote>($"vote-{request.poll}-{request.user}", vote,
                     tags: ["vote"],
                     cancellationToken: cancellationToken);
+                await _cache.RemoveAsync($"poll-{request.poll}-result", cancellationToken);
 
                 await _unitOfWork.CommitTransactionAsync(cancellationToken);
                 return Result.Created(new _dto

@@ -45,7 +45,7 @@ namespace Application.CQRS.RefreshToken
 
         public async Task<Result<_dto>> Handle(RefreshTokenRequest request, CancellationToken cancellationToken)
         {
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
             try
             {
@@ -75,6 +75,7 @@ namespace Application.CQRS.RefreshToken
                 await _unitOfWork.RefreshTokens.AddAsync(newToken, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+                await _unitOfWork.CommitTransactionAsync(cancellationToken);
                 return Result.Success(new _dto
                 {
                     access_token = accessToken,
@@ -83,7 +84,7 @@ namespace Application.CQRS.RefreshToken
             }
             catch
             {
-                await _unitOfWork.CommitTransactionAsync(cancellationToken);
+                await _unitOfWork.RollbackTransactionAsync(cancellationToken);
                 throw;
             }
         }
