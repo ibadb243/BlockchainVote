@@ -32,17 +32,14 @@ namespace Application.CQRS.GetPollResult
 
     public class GetPollResultRequestHandler : IRequestHandler<GetPollResultRequest, Result<_dto>>
     {
-        private readonly IVoteRepository _voteRepository;
-        private readonly IPollRepository _pollRepository;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly HybridCache _cache;
 
         public GetPollResultRequestHandler(
-            IVoteRepository voteRepository,
-            IPollRepository pollRepository,
+            IUnitOfWork unitOfWork,
             HybridCache cache)
         {
-            _voteRepository = voteRepository;
-            _pollRepository = pollRepository;
+            _unitOfWork = unitOfWork;
             _cache = cache;
         }
 
@@ -50,7 +47,7 @@ namespace Application.CQRS.GetPollResult
         {
             var cachedPoll = await _cache.GetOrCreateAsync($"poll-{request.id}", async token =>
             {
-                var poll = await _pollRepository.GetByIdAsync(request.id!.Value, token);
+                var poll = await _unitOfWork.Polls.GetByIdAsync(request.id!.Value, token);
                 return poll;
             },
             tags: ["poll"],
@@ -59,7 +56,7 @@ namespace Application.CQRS.GetPollResult
 
             var cachedResults = await _cache.GetOrCreateAsync($"poll-{request.id}-result", async token =>
             {
-                var votes = await _voteRepository.GetByPollAsync(request.id!.Value, token);
+                var votes = await _unitOfWork.Votes.GetByPollAsync(request.id!.Value, token);
                 var candidateIds = cachedPoll.Candidates.Select(c => c.Id).ToList();
                 var results = candidateIds.ToDictionary(id => id, id => 0);
 

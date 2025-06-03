@@ -38,19 +38,16 @@ namespace Application.CQRS.GetVote
 
     public class GetVoteRequestHandler : IRequestHandler<GetVoteRequest, Result<_dto>>
     {
-        private readonly IVoteRepository _voteRepository;
-        private readonly IPollRepository _pollRepository;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly HybridCache _cache;
         private readonly IMapper _mapper;
 
         public GetVoteRequestHandler(
-            IVoteRepository voteRepository,
-            IPollRepository pollRepository,
+            IUnitOfWork unitOfWork,
             HybridCache cache,
             IMapper mapper)
         {
-            _voteRepository = voteRepository;
-            _pollRepository = pollRepository;
+            _unitOfWork = unitOfWork;
             _cache = cache;
             _mapper = mapper;
         }
@@ -59,7 +56,7 @@ namespace Application.CQRS.GetVote
         {
             var cachedVote = await _cache.GetOrCreateAsync($"vote-{request.poll_id}-{request.user_id}", async token =>
             {
-                var vote = await _voteRepository.GetByUserAndPollAsync(request.user_id!.Value, request.poll_id!.Value, token);
+                var vote = await _unitOfWork.Votes.GetByUserAndPollAsync(request.user_id!.Value, request.poll_id!.Value, token);
                 return vote;
             },
             tags: ["vote"],
@@ -69,7 +66,7 @@ namespace Application.CQRS.GetVote
 
             var cachedPoll = await _cache.GetOrCreateAsync($"poll-{cachedVote.PollId}", async token =>
             {
-                var poll = await _pollRepository.GetByIdAsync(cachedVote.PollId, token);
+                var poll = await _unitOfWork.Polls.GetByIdAsync(cachedVote.PollId, token);
                 return poll;
             },
             tags: ["poll"],

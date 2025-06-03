@@ -32,56 +32,60 @@ namespace Application.CQRS.RefreshToken
 
     public class RefreshTokenRequestHandler : IRequestHandler<RefreshTokenRequest, Result<_dto>>
     {
-        private readonly IUserRepository _userRepository;
-        private readonly IRefreshTokenRepository _refreshTokenRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ITokenService _tokenService;
 
         public RefreshTokenRequestHandler(
-            IUserRepository userRepository,
-            IRefreshTokenRepository refreshTokenRepository,
             IUnitOfWork unitOfWork,
             ITokenService tokenService)
         {
-            _userRepository = userRepository;
-            _refreshTokenRepository = refreshTokenRepository;
             _unitOfWork = unitOfWork;
             _tokenService = tokenService;
         }
 
         public async Task<Result<_dto>> Handle(RefreshTokenRequest request, CancellationToken cancellationToken)
         {
-            var token = await _refreshTokenRepository.GetByTokenAsync(request.refresh_token, cancellationToken);
-            if (token == null || token.ExpiresAt < DateTime.UtcNow)
-                return Result.Unavailable("Invalid or expired refresh token");
-
-            var user = await _userRepository.GetByIdAsync(token.UserId, cancellationToken);
-            if (user == null)
-                return Result.NotFound("User not found");
-
-            var accessToken = _tokenService.GenerateAccessToken(user);
-            var newRefreshToken = _tokenService.GenerateRefreshToken();
-
-            await _refreshTokenRepository.DeleteAsync(user.Id, cancellationToken); // Удаляем старый токен
-
-            var newToken = new Domain.Entities.RefreshToken
-            {
-                Id = Guid.NewGuid(),
-                UserId = user.Id,
-                Token = newRefreshToken,
-                CreatedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddDays(7),
-                User = user
-            };
-
-            await _refreshTokenRepository.AddAsync(newToken, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            return Result.Success(new _dto
+            try
             {
-                access_token = accessToken,
-                refresh_token = newRefreshToken
-            });
+                var token = await _unitOfWork.RefreshTokens.GetByTokenAsync(request.refresh_token, cancellationToken);
+                if (token == null || token.ExpiresAt < DateTime.UtcNow)
+                    return Result.Unavailable("Invalid or expired refresh token");
+
+                var user = await _unitOfWork.Users.GetByIdAsync(token.UserId, cancellationToken);
+                if (user == null)
+                    return Result.NotFound("User not found");
+
+                var accessToken = _tokenService.GenerateAccessToken(user);
+                var newRefreshToken = _tokenService.GenerateRefreshToken();
+
+                await _unitOfWork.RefreshTokens.DeleteAsync(user.Id, cancellationToken); // Удаляем старый токен
+
+                var newToken = new Domain.Entities.RefreshToken
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = user.Id,
+                    Token = newRefreshToken,
+                    CreatedAt = DateTime.UtcNow,
+                    ExpiresAt = DateTime.UtcNow.AddDays(7),
+                    User = user
+                };
+
+                await _unitOfWork.RefreshTokens.AddAsync(newToken, cancellationToken);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                return Result.Success(new _dto
+                {
+                    access_token = accessToken,
+                    refresh_token = newRefreshToken
+                });
+            }
+            catch
+            {
+                await _unitOfWork.CommitTransactionAsync(cancellationToken);
+                throw;
+            }
         }
     }
 }

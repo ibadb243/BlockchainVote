@@ -45,16 +45,16 @@ namespace Application.CQRS.GetPoll
 
     public class GetPollRequestHandler : IRequestHandler<GetPollRequest, Result<_dto>>
     {
-        private readonly IPollRepository _pollRepository;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly HybridCache _cache;
         private readonly IMapper _mapper;
 
         public GetPollRequestHandler(
-            IPollRepository pollRepository,
+            IUnitOfWork unitOfWork,
             HybridCache cache,
             IMapper mapper)
         {
-            _pollRepository = pollRepository;
+            _unitOfWork = unitOfWork;
             _cache = cache;
             _mapper = mapper;
         }
@@ -63,7 +63,7 @@ namespace Application.CQRS.GetPoll
         {
             var cachedPoll = await _cache.GetOrCreateAsync($"poll-{request.id!.Value}", async token =>
             {
-                var poll = await _pollRepository.GetByIdAsync(request.id!.Value, token);
+                var poll = await _unitOfWork.Polls.GetByIdAsync(request.id!.Value, token);
                 return poll;
             },
             tags: ["poll"],

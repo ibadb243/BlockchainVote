@@ -56,18 +56,15 @@ namespace Application.CQRS.CreatePoll
 
     public class CreatePollRequestHandler : IRequestHandler<CreatePollRequest, Result<_dto>>
     {
-        private readonly IPollRepository _pollRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly HybridCache _cache;
         private readonly IMapper _mapper;
 
         public CreatePollRequestHandler(
-            IPollRepository pollRepository,
             IUnitOfWork unitOfWork,
             HybridCache cache,
             IMapper mapper)
         {
-            _pollRepository = pollRepository;
             _unitOfWork = unitOfWork;
             _cache = cache;
             _mapper = mapper;
@@ -75,50 +72,61 @@ namespace Application.CQRS.CreatePoll
 
         public async Task<Result<_dto>> Handle(CreatePollRequest request, CancellationToken cancellationToken)
         {
-            var candidates = request.candidates.Select((name, index) => new Candidate
-            {
-                Id = index + 1,
-                Name = name,
-                PollId = Guid.Empty
-            }).ToList();
+            await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
-            var poll = new Poll
+            try
             {
-                Id = Guid.NewGuid(),
-                Title = request.title!,
-                Candidates = candidates,
-                StartTime = request.start_date!.Value,
-                EndTime = request.end_date!.Value,
-                IsSurvey = request.is_survey,
-                AllowRevote = request.allow_revote,
-                MaxSelections = request.max_selection,
-                IsAnonymous = request.is_anonymous,
-            };
+                var candidates = request.candidates.Select((name, index) => new Candidate
+                {
+                    Id = index + 1,
+                    Name = name,
+                    PollId = Guid.Empty
+                }).ToList();
 
-            foreach (var candidate in poll.Candidates)
-            {
-                candidate.PollId = poll.Id;
-                candidate.Poll = poll;
+                var poll = new Poll
+                {
+                    Id = Guid.NewGuid(),
+                    Title = request.title!,
+                    Candidates = candidates,
+                    StartTime = request.start_date!.Value,
+                    EndTime = request.end_date!.Value,
+                    IsSurvey = request.is_survey,
+                    AllowRevote = request.allow_revote,
+                    MaxSelections = request.max_selection,
+                    IsAnonymous = request.is_anonymous,
+                };
+
+                foreach (var candidate in poll.Candidates)
+                {
+                    candidate.PollId = poll.Id;
+                    candidate.Poll = poll;
+                }
+
+                await _unitOfWork.Polls.AddAsync(poll, cancellationToken);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                await _cache.SetAsync<Poll>($"poll-{poll.Id}", poll,
+                    tags: ["poll"],
+                    cancellationToken: cancellationToken);
+
+                await _unitOfWork.CommitTransactionAsync(cancellationToken);
+                return Result.Created(new _dto
+                {
+                    id = poll.Id,
+                    title = poll.Title,
+                    candidate_count = candidates.Count,
+                    start_date = poll.StartTime,
+                    end_date = poll.EndTime,
+                    is_survey = poll.IsSurvey,
+                    allow_revote = poll.AllowRevote,
+                    is_anonymous = poll.IsAnonymous,
+                });
             }
-
-            await _pollRepository.AddAsync(poll, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            await _cache.SetAsync<Poll>($"poll-{poll.Id}", poll,
-                tags: ["poll"],
-                cancellationToken: cancellationToken);
-
-            return Result.Created(new _dto
+            catch
             {
-                id = poll.Id,
-                title = poll.Title,
-                candidate_count = candidates.Count,
-                start_date = poll.StartTime,
-                end_date = poll.EndTime,
-                is_survey = poll.IsSurvey,
-                allow_revote = poll.AllowRevote,
-                is_anonymous = poll.IsAnonymous,
-            });
+                await _unitOfWork.RollbackTransactionAsync(cancellationToken);
+                throw;
+            }
         }
     }
 }

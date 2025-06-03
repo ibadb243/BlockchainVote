@@ -36,23 +36,17 @@ namespace Application.CQRS.RegisterUser
 
     public class RegisterUserRequestHandler : IRequestHandler<RegisterUserRequest, Result<_dto>>
     {
-        private readonly IUserRepository _userRepository;
-        private readonly IRefreshTokenRepository _refreshTokenRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly HybridCache _cache;
         private readonly ITokenService _tokenService;
         private readonly IPasswordHasher _passwordHasher;
 
         public RegisterUserRequestHandler(
-            IUserRepository userRepository,
-            IRefreshTokenRepository refreshTokenRepository,
             IUnitOfWork unitOfWork,
             HybridCache cache,
             ITokenService tokenService,
             IPasswordHasher passwordHasher)
         {
-            _userRepository = userRepository;
-            _refreshTokenRepository = refreshTokenRepository;
             _unitOfWork = unitOfWork;
             _cache = cache;
             _tokenService = tokenService;
@@ -61,43 +55,54 @@ namespace Application.CQRS.RegisterUser
 
         public async Task<Result<_dto>> Handle(RegisterUserRequest request, CancellationToken cancellationToken)
         {
-            if (await _userRepository.GetByEmailAsync(request.email, cancellationToken) != null)
-                return Result.Conflict("Email already exists");
+            await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
-            var user = new User
+            try
             {
-                Id = Guid.NewGuid(),
-                Email = request.email,
-                PasswordHash = _passwordHasher.HashPassword(request.password)
-            };
+                if (await _unitOfWork.Users.GetByEmailAsync(request.email, cancellationToken) != null)
+                    return Result.Conflict("Email already exists");
 
-            await _userRepository.AddAsync(user);
+                var user = new User
+                {
+                    Id = Guid.NewGuid(),
+                    Email = request.email,
+                    PasswordHash = _passwordHasher.HashPassword(request.password)
+                };
 
-            var accessToken = _tokenService.GenerateAccessToken(user);
-            var refreshToken = _tokenService.GenerateRefreshToken();
+                await _unitOfWork.Users.AddAsync(user, cancellationToken);
 
-            var token = new Domain.Entities.RefreshToken
+                var accessToken = _tokenService.GenerateAccessToken(user);
+                var refreshToken = _tokenService.GenerateRefreshToken();
+
+                var token = new Domain.Entities.RefreshToken
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = user.Id,
+                    Token = refreshToken,
+                    CreatedAt = DateTime.UtcNow,
+                    ExpiresAt = DateTime.UtcNow.AddDays(7),
+                    User = user
+                };
+
+                await _unitOfWork.RefreshTokens.AddAsync(token, cancellationToken);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                await _cache.SetAsync($"user-{user.Id}", user,
+                    tags: ["user"],
+                    cancellationToken: cancellationToken);
+
+                await _unitOfWork.CommitTransactionAsync(cancellationToken);
+                return Result.Created(new _dto
+                {
+                    access_token = accessToken,
+                    refresh_token = refreshToken,
+                });
+            }
+            catch
             {
-                Id = Guid.NewGuid(),
-                UserId = user.Id,
-                Token = refreshToken,
-                CreatedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddDays(7),
-                User = user
-            };
-
-            await _refreshTokenRepository.AddAsync(token, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            await _cache.SetAsync($"user-{user.Id}", user,
-                tags: ["user"],
-                cancellationToken: cancellationToken);
-
-            return Result.Created(new _dto
-            {
-                access_token = accessToken,
-                refresh_token = refreshToken,
-            });
+                await _unitOfWork.RollbackTransactionAsync(cancellationToken);
+                throw;
+            }
         }
     }
 }
