@@ -38,20 +38,20 @@ namespace Application.CQRS.GetBlockList
 
     public class GetBlockListRequestHandler : IRequestHandler<GetBlockListRequest, Result<List<_dto>>>
     {
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IBlockRepository _blockRepository;
         private readonly IMapper _mapper;
 
         public GetBlockListRequestHandler(
-            IUnitOfWork unitOfWork,
+            IBlockRepository blockRepository,
             IMapper mapper)
         {
-            _unitOfWork = unitOfWork;
+            _blockRepository = blockRepository;
             _mapper = mapper;
         }
 
         public async Task<Result<List<_dto>>> Handle(GetBlockListRequest request, CancellationToken cancellationToken)
         {
-            var blocks = await _unitOfWork.Blocks
+            var blocks = await _blockRepository
                 .GetAllQuery()
                 .Skip(request.offset)
                 .Take(request.limit)

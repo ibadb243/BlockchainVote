@@ -38,16 +38,16 @@ namespace Application.CQRS.GetBlock
 
     public class GetBlockRequestHandler : IRequestHandler<GetBlockRequest, Result<_dto>>
     {
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IBlockRepository _blockRepository;
         private readonly HybridCache _cache;
         private readonly IMapper _mapper;
 
         public GetBlockRequestHandler(
-            IUnitOfWork unitOfWork,
+            IBlockRepository blockRepository,
             HybridCache cache,
             IMapper mapper)
         {
-            _unitOfWork = unitOfWork;
+            _blockRepository = blockRepository;
             _cache = cache;
             _mapper = mapper;
         }
@@ -56,7 +56,7 @@ namespace Application.CQRS.GetBlock
         {
             var cachedBlock = await _cache.GetOrCreateAsync($"block-{request.hash}", async token =>
             {
-                var block = await _unitOfWork.Blocks.GetByHashAsync(request.hash!, token);
+                var block = await _blockRepository.GetByHashAsync(request.hash!, token);
                 return block;
             },
                 tags: ["block"],
