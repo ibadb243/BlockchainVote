@@ -13,21 +13,18 @@ namespace Application.BackgroundServices
 {
     public class BlockchainBackgroundService : BackgroundService
     {
-        private readonly IPendingVoteRepository _pendingVoteRepository;
-        private readonly IBlockRepository _blockRepository;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly ITransactionConverterService _transactionConverterService;
         private readonly IBlockService _blockService;
         private readonly ILogger<BlockchainBackgroundService> _logger;
 
         public BlockchainBackgroundService(
-            IPendingVoteRepository pendingVoteRepository,
-            IBlockRepository blockRepository,
+            IUnitOfWork unitOfWork,
             ITransactionConverterService transactionConverterService,
             IBlockService blockService,
             ILogger<BlockchainBackgroundService> logger)
         {
-            _pendingVoteRepository = pendingVoteRepository;
-            _blockRepository = blockRepository;
+            _unitOfWork = unitOfWork;
             _transactionConverterService = transactionConverterService;
             _blockService = blockService;
             _logger = logger;
@@ -37,20 +34,34 @@ namespace Application.BackgroundServices
         {
             while (!stoppingToken.IsCancellationRequested)
             {
+                await _unitOfWork.RollbackTransactionAsync(stoppingToken);
                 await Task.Delay(10 * 60 * 1000, stoppingToken);
 
-                var votes = await _pendingVoteRepository.GetAllAsync();
-                if (votes.Count == 0) continue;
+                await _unitOfWork.BeginTransactionAsync(stoppingToken);
 
-                var lastBlock = await _blockRepository.GetLastAsync();
-                var transactions = votes
-                    .Select(_transactionConverterService.ConvertToBlockTransaction)
-                    .ToList();
+                try
+                {
+                    var votes = await _unitOfWork.PendingVotes.GetAllAsync();
+                    if (votes.Count == 0) continue;
 
-                var block = await _blockService.CreateBlockAsync(transactions, lastBlock.Hash);
+                    var lastBlock = await _unitOfWork.Blocks.GetLastAsync();
+                    var transactions = votes
+                        .Select(_transactionConverterService.ConvertToBlockTransaction)
+                        .ToList();
 
-                await _pendingVoteRepository.DeleteRangeAsync(votes);
-                await _blockRepository.AddAsync(block);
+                    var block = await _blockService.CreateBlockAsync(transactions, lastBlock.Hash);
+
+                    await _unitOfWork.PendingVotes.DeleteRangeAsync(votes);
+                    await _unitOfWork.Blocks.AddAsync(block);
+                    await _unitOfWork.SaveChangesAsync(stoppingToken);
+
+                    await _unitOfWork.CommitTransactionAsync(stoppingToken);
+                }
+                catch
+                {
+                    await _unitOfWork.RollbackTransactionAsync(stoppingToken);
+                    throw;
+                }
             }
         }
     }
