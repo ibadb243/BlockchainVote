@@ -4,6 +4,7 @@ using Domain.Blockchain;
 using Domain.Entities;
 using FluentValidation;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
 using System;
 using System.Collections.Generic;
@@ -86,84 +87,66 @@ namespace Application.CQRS.SubmitVote
                 if (cachedPoll.IsSurvey && cachedPoll.MaxSelections.HasValue && request.selection.Count > cachedPoll.MaxSelections.Value)
                     return Result.Conflict($"Cannot select more than {cachedPoll.MaxSelections.Value} candidates");
 
-                var cachedVote = await _cache.GetOrCreateAsync($"vote-{request.poll}-{request.user}", async token =>
-                {
-                    var existingVote = await _unitOfWork.Votes.GetByUserAndPollAsync(request.user!.Value, request.poll!.Value, cancellationToken);
-                    return existingVote;
-                },
-                tags: ["vote"],
-                cancellationToken: cancellationToken);
+                var existingVote = await _unitOfWork.Votes.GetByUserAndPollAsync(request.user!.Value, request.poll!.Value, cancellationToken);
 
-                if (cachedVote != null)
+                if (existingVote != null)
                 {
                     if (!cachedPoll.AllowRevote)
                         return Result.Conflict("User already voted and revoting is not allowed");
 
-                    cachedVote.Timestamp = DateTime.UtcNow;
-                    cachedVote.Candidates.Clear();
-                    cachedVote.Candidates.AddRange(request.selection.Select(id => new VoteCandidate
+                    existingVote.Timestamp = DateTime.UtcNow;
+                    existingVote.Candidates.Clear();
+                    existingVote.Candidates.AddRange(request.selection.Select(id => new VoteCandidate
                     {
-                        PollId = cachedVote.PollId,
+                        PollId = existingVote.PollId,
                         CandidateId = id,
                     }));
 
-                    await _unitOfWork.Votes.UpdateAsync(cachedVote, cancellationToken);
-                    await _unitOfWork.PendingVotes.AddAsync(new PendingVote()
+                    await _unitOfWork.Votes.UpdateAsync(existingVote, cancellationToken);
+                } else
+                {
+                    var vote = new Vote
                     {
-                        UserId = cachedVote.UserId,
-                        PollId = cachedVote.PollId,
-                        Timestamp = cachedVote.Timestamp,
-                        CandidateIds = request.selection,
-                    }, cancellationToken);
+                        UserId = request.user!.Value,
+                        PollId = request.poll!.Value,
+                        Timestamp = DateTime.UtcNow,
+                        Candidates = request.selection.Select(id => new VoteCandidate
+                        {
+                            PollId = request.poll!.Value,
+                            UserId = request.user!.Value,
+                            CandidateId = id,
+                        }).ToList()
+                    };
 
-                    await _cache.RemoveAsync($"poll-{request.poll}-result", cancellationToken);
-
-                    await _unitOfWork.CommitTransactionAsync(cancellationToken);
-                    return Result.Success(new _dto
+                    try
                     {
-                        selection = request.selection,
-                    });
+                        await _unitOfWork.Votes.AddAsync(vote, cancellationToken);
+                    }
+                    catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex))
+                    {
+                        return Result.Conflict("Vote already exists");
+                    }
                 }
 
-                var vote = new Vote
+                await _unitOfWork.PendingVotes.AddAsync(new PendingVote()
                 {
                     UserId = request.user!.Value,
                     PollId = request.poll!.Value,
                     Timestamp = DateTime.UtcNow,
-                    Candidates = request.selection.Select(id => new VoteCandidate
-                    {
-                        PollId = Guid.Empty,
-                        UserId = Guid.Empty,
-                        CandidateId = id,
-                    }).ToList()
-                };
-
-                foreach (var voteCandidate in vote.Candidates)
-                {
-                    voteCandidate.PollId = vote.PollId;
-                    voteCandidate.UserId = vote.UserId;
-                }
-
-                await _unitOfWork.Votes.AddAsync(vote, cancellationToken);
-                await _unitOfWork.PendingVotes.AddAsync(new PendingVote()
-                {
-                    UserId = vote.UserId,
-                    PollId = vote.PollId,
-                    Timestamp = vote.Timestamp,
                     CandidateIds = request.selection,
                 }, cancellationToken);
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                await _cache.SetAsync<Vote>($"vote-{request.poll}-{request.user}", vote,
-                    tags: ["vote"],
-                    cancellationToken: cancellationToken);
+
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                await _unitOfWork.CommitTransactionAsync(cancellationToken);
+
+                await _cache.RemoveAsync($"vote-{request.poll}-{request.user}", cancellationToken);
                 await _cache.RemoveAsync($"poll-{request.poll}-result", cancellationToken);
 
-                await _unitOfWork.CommitTransactionAsync(cancellationToken);
                 return Result.Created(new _dto
                 {
                     selection = request.selection,
-                    timestamp = vote.Timestamp,
+                    timestamp = DateTime.UtcNow,
                 });
             }
             catch
@@ -171,6 +154,12 @@ namespace Application.CQRS.SubmitVote
                 await _unitOfWork.RollbackTransactionAsync(cancellationToken);
                 throw;
             }
+        }
+
+        private static bool IsUniqueConstraintViolation(DbUpdateException ex)
+        {
+            return ex.InnerException?.Message.Contains("unique constraint") == true ||
+                   ex.InnerException?.Message.Contains("duplicate key") == true;
         }
     }
 }

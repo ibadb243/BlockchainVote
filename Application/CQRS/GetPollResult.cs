@@ -48,20 +48,13 @@ namespace Application.CQRS.GetPollResult
 
         public async Task<Result<_dto>> Handle(GetPollResultRequest request, CancellationToken cancellationToken)
         {
-            var cachedPoll = await _cache.GetOrCreateAsync($"poll-{request.id}", async token =>
-            {
-                var poll = await _pollRepository.GetByIdAsync(request.id!.Value, token);
-                return poll;
-            },
-            tags: ["poll"],
-            cancellationToken: cancellationToken);
-            if (cachedPoll == null) return Result.NotFound("Poll not found");
-
             var cachedResults = await _cache.GetOrCreateAsync($"poll-{request.id}-result", async token =>
             {
+                var poll = await _pollRepository.GetByIdAsync(request.id!.Value, token);
+                if (poll == null) return null;
+
                 var votes = await _voteRepository.GetByPollAsync(request.id!.Value, token);
-                var candidateIds = cachedPoll.Candidates.Select(c => c.Id).ToList();
-                var results = candidateIds.ToDictionary(id => id, id => 0);
+                var results = poll.Candidates.ToDictionary(c => c.Id, c => 0);
 
                 foreach (var vote in votes)
                 {
@@ -72,14 +65,16 @@ namespace Application.CQRS.GetPollResult
                     }
                 }
 
-                return results;
+                return new { VoteCount = votes.Count, Results = results };
             },
             tags: ["results"],
             cancellationToken: cancellationToken);
 
+            if (cachedResults == null) return Result.NotFound("Poll not found");
+
             return Result.Success(new _dto {
-                vote_count = cachedPoll.Votes.Count,
-                results = cachedResults
+                vote_count = cachedResults.VoteCount,
+                results = cachedResults.Results,
             });
         }
     }
