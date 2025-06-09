@@ -4,7 +4,6 @@ using Application.CQRS.RegisterUser;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using WebAPI.DTOs;
 
 namespace WebAPI.Controllers
 {
