@@ -1,4 +1,5 @@
-﻿using Application.Interfaces.Repositories;
+﻿using Application.Common.Mappings;
+using Application.Interfaces.Repositories;
 using Ardalis.Result;
 using AutoMapper;
 using Domain.Blockchain;
@@ -13,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace Application.CQRS.GetBlock
 {
-    public class _dto
+    public class _dto : IMapWith<Block>
     {
         public DateTime timestamp { get; set; }
         public string merkle_root { get; set; }
@@ -21,6 +22,17 @@ namespace Application.CQRS.GetBlock
         public string previous_hash { get; set; }
         public string hash { get; set; }
         public int nonce { get; set; }
+
+        public void Mapping(Profile profile)
+        {
+            profile.CreateMap<Block, _dto>()
+                .ForMember(dest => dest.timestamp, opt => opt.MapFrom(src => src.Timestamp))
+                .ForMember(dest => dest.merkle_root, opt => opt.MapFrom(src => src.MerkleRoot))
+                .ForMember(dest => dest.transactions, opt => opt.MapFrom(src => src.Transactions))
+                .ForMember(dest => dest.previous_hash, opt => opt.MapFrom(src => src.PreviousHash))
+                .ForMember(dest => dest.hash, opt => opt.MapFrom(src => src.Hash))
+                .ForMember(dest => dest.nonce, opt => opt.MapFrom(src => src.Nonce));
+        }
     }
 
     public class GetBlockRequest : IRequest<Result<_dto>>
@@ -64,15 +76,7 @@ namespace Application.CQRS.GetBlock
 
             if (cachedBlock == null) return Result.NotFound("Block not found");
 
-            return Result.Success(new _dto
-            {
-                timestamp = cachedBlock.Timestamp,
-                transactions = cachedBlock.Transactions,
-                merkle_root = cachedBlock.MerkleRoot,
-                previous_hash = cachedBlock.PreviousHash,
-                hash = cachedBlock.Hash,
-                nonce = cachedBlock.Nonce,
-            });
+            return Result.Success(_mapper.Map<_dto>(cachedBlock));
         }
     }
 }

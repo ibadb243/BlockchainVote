@@ -1,4 +1,5 @@
-﻿using Application.Interfaces.Repositories;
+﻿using Application.Common.Mappings;
+using Application.Interfaces.Repositories;
 using Ardalis.Result;
 using AutoMapper;
 using Domain.Entities;
@@ -13,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace Application.CQRS.CreatePoll
 {
-    public class _dto
+    public class _dto : IMapWith<Poll>
     {
         public Guid id { get; set; }
         public string title { get; set; }
@@ -24,6 +25,20 @@ namespace Application.CQRS.CreatePoll
         public bool allow_revote { get; set; }
         public int? max_selection { get; set; }
         public bool is_anonymous { get; set; }
+
+        public void Mapping(Profile profile)
+        {
+            profile.CreateMap<Poll, _dto>()
+                .ForMember(dest => dest.id, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.title, opt => opt.MapFrom(src => src.Title))
+                .ForMember(dest => dest.candidate_count, opt => opt.MapFrom(src => src.Candidates.Count()))
+                .ForMember(dest => dest.start_date, opt => opt.MapFrom(src => src.StartTime))
+                .ForMember(dest => dest.end_date, opt => opt.MapFrom(src => src.EndTime))
+                .ForMember(dest => dest.is_survey, opt => opt.MapFrom(src => src.IsSurvey))
+                .ForMember(dest => dest.allow_revote, opt => opt.MapFrom(src => src.AllowRevote))
+                .ForMember(dest => dest.max_selection, opt => opt.MapFrom(src => src.MaxSelections))
+                .ForMember(dest => dest.is_anonymous, opt => opt.MapFrom(src => src.IsSurvey));
+        }
     }
 
     public class CreatePollRequest : IRequest<Result<_dto>>
@@ -110,17 +125,7 @@ namespace Application.CQRS.CreatePoll
                     cancellationToken: cancellationToken);
 
                 await _unitOfWork.CommitTransactionAsync(cancellationToken);
-                return Result.Created(new _dto
-                {
-                    id = poll.Id,
-                    title = poll.Title,
-                    candidate_count = candidates.Count,
-                    start_date = poll.StartTime,
-                    end_date = poll.EndTime,
-                    is_survey = poll.IsSurvey,
-                    allow_revote = poll.AllowRevote,
-                    is_anonymous = poll.IsAnonymous,
-                });
+                return Result.Created(_mapper.Map<_dto>(poll));
             }
             catch
             {

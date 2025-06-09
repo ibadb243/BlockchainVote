@@ -1,6 +1,8 @@
-﻿using Application.Interfaces.Repositories;
+﻿using Application.Common.Mappings;
+using Application.Interfaces.Repositories;
 using Ardalis.Result;
 using AutoMapper;
+using Domain.Entities;
 using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.Caching.Hybrid;
@@ -12,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace Application.CQRS.GetPoll
 {
-    public class _dto
+    public class _dto : IMapWith<Poll>
     {
         public string title { get; set; }
         public List<__dto> candidates { get; set; }
@@ -23,10 +25,30 @@ namespace Application.CQRS.GetPoll
         public int? max_selection { get; set; }
         public bool is_anonymous { get; set; }
 
-        public class __dto
+        public class __dto : IMapWith<Candidate>
         {
             public int id { get; set; }
             public string name { get; set; }
+
+            public void Mapping(Profile profile)
+            {
+                profile.CreateMap<Candidate, __dto>()
+                    .ForMember(dest => dest.id, opt => opt.MapFrom(src => src.Id))
+                    .ForMember(dest => dest.name, opt => opt.MapFrom(src => src.Name));
+            }
+        }
+
+        public void Mapping(Profile profile)
+        {
+            profile.CreateMap<Poll, _dto>()
+                .ForMember(dest => dest.title, opt => opt.MapFrom(src => src.Title))
+                .ForMember(dest => dest.candidates, opt => opt.MapFrom(src => src.Candidates))
+                .ForMember(dest => dest.start_date, opt => opt.MapFrom(src => src.StartTime))
+                .ForMember(dest => dest.end_date, opt => opt.MapFrom(src => src.EndTime))
+                .ForMember(dest => dest.is_survey, opt => opt.MapFrom(src => src.IsSurvey))
+                .ForMember(dest => dest.allow_revote, opt => opt.MapFrom(src => src.AllowRevote))
+                .ForMember(dest => dest.max_selection, opt => opt.MapFrom(src => src.MaxSelections))
+                .ForMember(dest => dest.is_anonymous, opt => opt.MapFrom(src => src.IsAnonymous));
         }
     }
 
@@ -71,17 +93,7 @@ namespace Application.CQRS.GetPoll
 
             if (cachedPoll == null) return Result.NotFound();
 
-            return Result.Success(new _dto
-            {
-                title = cachedPoll.Title,
-                candidates = cachedPoll.Candidates.Select(c => new _dto.__dto { id = c.Id, name = c.Name }).ToList(),
-                start_date = cachedPoll.StartTime,
-                end_date = cachedPoll.EndTime,
-                is_survey = cachedPoll.IsSurvey,
-                allow_revote = cachedPoll.AllowRevote,
-                max_selection = cachedPoll.MaxSelections,
-                is_anonymous = cachedPoll.IsAnonymous,
-            });
+            return Result.Success(_mapper.Map<_dto>(cachedPoll));
         }
     }
 }
